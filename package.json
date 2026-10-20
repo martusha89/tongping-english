@@ -15,8 +15,10 @@
     "daemon": "tsx src/daemon.ts",
     "typecheck": "tsc --noEmit",
     "build:hosted": "esbuild src/hosted-main.ts --bundle --platform=node --format=esm --target=node20 --packages=external --outfile=dist/hosted.mjs",
+    "build:local-app-host": "node scripts/build-local-app-host.mjs",
+    "smoke:local-app": "node scripts/smoke-local-app.mjs",
     "test": "node --import tsx --test tests/*.test.ts",
-    "check": "npm run typecheck && npm test",
+    "check": "npm run build:local-app-host && npm run typecheck && npm test",
     "doctor": "node scripts/doctor.mjs",
     "asr:install": "node scripts/install-asr.mjs",
     "room:watch": "node scripts/room-watch.mjs"
