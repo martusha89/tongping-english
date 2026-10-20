@@ -10,10 +10,10 @@ test("ready state never exposes a second Start Companion button", () => {
 });
 
 test("ready copy explicitly says playback is automatic", () => {
-  assert.ok(app.includes("缓存好了，正在自动开始…"));
-  assert.ok(app.includes("不需要再点；正在沿同一条录制时间轴自动接回音画。"));
-  assert.ok(!app.includes("点一下开始陪看"));
-  assert.ok(!app.includes("再点一次「开始陪看」"));
+  assert.ok(app.includes("Buffer ready; starting automatically…"));
+  assert.ok(app.includes("No action needed; reconnecting audio and video on the same recording timeline."));
+  assert.ok(!app.includes("Tap to start watching together"));
+  assert.ok(!app.includes("Tap “Start watching together” again"));
 });
 
 test("playlist probe retries play on the original media src without rebinding it", () => {
@@ -26,7 +26,7 @@ test("playlist probe retries play on the original media src without rebinding it
 });
 
 test("automatic retry preserves diagnostics without asking for another tap", () => {
-  assert.ok(app.includes('setNudgeStatus("自动起播重试中 · " + detail)'));
+  assert.ok(app.includes('setNudgeStatus("Retrying autoplay · " + detail)'));
 });
 
 test("App v89 is the fresh resource identity", () => {

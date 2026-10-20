@@ -1,77 +1,85 @@
-# 更新日志
+# Changelog
 
-## 0.4.0-personal.2（2026-10-10）
+## English edition (2026-10-20)
 
-### 更顺手
-- **跟着你看的标签走**：你在电脑上切到别的标签、或点开一个新标签（比如 B 站点视频会新开一页），实时画面、AI 的操作和陪看录制都会跟过去，不再停在旧页面。
-- **回到 LIVE 立刻生效**：从陪看切回实时画面不再等 3 秒，也不会被还没传完的录制拖慢。
-- **视频页轻提示**：实时画面为点得跟手而优化；在视频页会淡淡提示一句「看视频点进入陪看更流畅」。
-- **窗口被最小化会自动恢复**：最小化的 Chrome 不画画面（截图全白、实时画面冻住），现在有人在看时会自动把它恢复。
-- **断线自己重连**：长连接每 15 秒心跳一次，网络断了又通以后能认出"半断"的连接并重连。日志每行带时间。
+- Localized the complete browser card, Watch Together flow, group chat, camera controls, OAuth page, MCP tool text, runtime errors, launchers, diagnostics, self-test output, configuration template, documentation, issue template, and accessibility labels into English.
+- Replaced the Chinese artwork wordmark with accessible English “TongPing” text and tuned the desktop/mobile layout for longer English labels.
+- Preserved Chinese-website subtitle controls, risk detection, transaction protection, CAPTCHA/login-wall recognition, OCR filtering, and representative multilingual test fixtures.
+- Renamed the Windows launcher to `Start-TongPing.cmd` while preserving behavior.
+- Preserved the upstream `Required Notice` and PolyForm Noncommercial 1.0.0 terms.
 
-### 滑块和登录
-- 淘宝 / 天猫 / 闲鱼 / 京东 / B站 / Google / YouTube 的滑块和登录墙：你在看的时候会自动交给电脑上的普通 Chrome 窗口，在那里过完、关掉整个窗口就自动接回；卡片会很快显示交出和接回的状态。AI 被要求永远不要自己解滑块或验证码。
+## 0.4.0-personal.2 (2026-10-10)
 
-### 陪看
-- 录制和恢复更稳：上行抖动时更少重新缓冲，录制重开后很快续上。
-- 给 AI 的「听」更干净：语音识别在纯音乐里编出来的句子（如 "Thank you."、字幕组署名）会被过滤；声音段落合并成至少 1 秒一段，不再每 20 毫秒报一次。
+### Usability
+- **Follows the tab you are viewing**: switching tabs on your computer or opening a new one (for example, a Bilibili video opening in a new tab) now moves the live view, AI actions, and Watch Together recording to that tab instead of leaving them on the old page.
+- **Returning to LIVE takes effect immediately**: switching from Watch Together to live view no longer waits 3 seconds or stalls behind unfinished recording uploads.
+- **A subtle hint on video pages**: live view is optimized for responsive clicks; video pages gently suggest “Enter Watch Together for smoother video.”
+- **Minimized windows restore automatically**: minimized Chrome windows stop rendering (white screenshots, frozen live view). They now restore automatically while someone is watching.
+- **Automatic reconnection**: persistent connections send heartbeats every 15 seconds, detect half-open connections after a network outage, and reconnect. Each log line includes a timestamp.
 
-### 给 AI 的图
-- 截图和「叫大家看」都改成小 JPEG：有的宿主（ChatGPT）会把过大的工具结果存成文件，模型看不到图。
-- 工具说明写明图片在文字后面单独一项，回答前要看图本身。
-- iPhone 上陪看时「叫大家看」不再交空白图（iOS 画不出 HLS 视频帧），改用服务器缓存里你正在看的那一帧。
-- 「叫大家看」会让 AI 先看图，再把回应推进群聊，最后在自己的聊天里回应。
+### Sliders and login
+- Slider challenges and login walls on Taobao / Tmall / Xianyu / JD.com / Bilibili / Google / YouTube automatically hand off to a regular Chrome window on your computer while you are watching. Complete the challenge there and close the entire window to reconnect automatically. The card promptly shows handoff and return status. AI is instructed never to solve sliders or CAPTCHAs itself.
 
-### 许可变更
-- 许可证从 MIT 改为 **PolyForm Noncommercial 1.0.0**：可以自用、学习、研究和非营利使用，**不许商用**。
+### Watch Together
+- More reliable recording and recovery: fewer buffering restarts during upload jitter, and quick resumption after recording restarts.
+- Cleaner audio context for AI: filters speech recognition hallucinations in instrumental music (such as “Thank you.” or subtitling credits); merges audio segments into chunks of at least 1 second instead of reporting every 20 milliseconds.
 
-### 其他
-- 非英文设备名不再让请求出错。
-- 卡片缓存版本等若干稳定性修复。
+### Images for AI
+- Screenshots and “Show everyone” now use small JPEGs: some hosts (ChatGPT) store oversized tool results as files, leaving the model unable to see the image.
+- Tool instructions clarify that the image is a separate item after the text and must be viewed before answering.
+- “Show everyone” during Watch Together on iPhone no longer submits blank images (iOS cannot draw HLS video frames); it uses the server-cached frame you are watching instead.
+- “Show everyone” asks AI to view the image first, post its response to group chat, then respond in its own conversation.
 
-## 0.4.0-personal.1（2026-10-03）
+### License change
+- Changed from MIT to **PolyForm Noncommercial 1.0.0**: personal use, learning, research, and nonprofit use are allowed; **commercial use is prohibited**.
 
-同屏个人版的第一个公开版本。
+### Other
+- Non-English device names no longer cause request errors.
+- Stability fixes, including card cache versioning.
 
-### 包含
-- 共享浏览器 MCP 服务：打开 / 阅读 / 快照 / 点击 / 输入 / 滚动 / 截图 / 多 profile 持久登录。
-- 同屏卡片（MCP Apps）：实时画面（WebSocket）、声音、人工接管「我来操作 / 还给模型」。
-- 陪看：延迟缓冲 HLS 播放，AI 读到的字幕和画面按你的观看进度限制，不剧透。
-- 群聊：你和多个 AI（claude.chat / claude.code / gpt.chat / gpt.codex …）共用一个房间，可静音、清空。
-- OAuth 2.1（动态注册 + PKCE + 密码），自动区分 claude.ai 与 ChatGPT 的卡片元数据规则。
-- 安全：密码框禁止 AI 输入、高风险点击逐次审批、小红书/抖音风控冻结与频率预算、审计日志不记录输入内容。
+## 0.4.0-personal.1 (2026-10-03)
 
-### 个人版新增
-- `npm run up`：一条命令启动 daemon + 本机 worker，自动处理配对令牌、Host 白名单、数据子目录。
-- `npm run selftest`：端到端自检（网页、视频、实时画面、群聊）。
-- `npm run doctor`：体检 + 已打码的诊断摘要。
-- `npm run asr:install`：一键安装本地字幕（faster-whisper，GPU/CPU 自动选择，`--cn` 走国内镜像）。没有字幕的视频，AI 也能读到台词。
-- `npm run room:watch`：让本机的 Claude Code / Codex 挂在群聊里，有人说话就被叫醒。
-- 群聊说明 `docs/GROUP-CHAT.md`。
-- 自动读取项目根目录 `.env`。
-- `启动同屏.cmd`（Windows 双击启动）、`start.command`（macOS）。
-- 全中文安装 / 接入 / 升级 / 卸载 / AI 排障手册。
+The first public release of TongPing Personal Edition.
 
-### 修复（相对内部版本）
-- 修改 `TONGPING_PORT` 后，卡片里的地址仍指向 45921，导致聊天和画面连不上。
-- 陪看缓冲、语音 key、观看记录等默认路径改为 `TONGPING_HOME` 下，不再写死服务器路径。
-- Windows 上陪看的 HLS init 分片被 ffmpeg 写到了启动目录（代码文件夹）而不是数据目录：陪看取不到 init 分片，且视频内容会落进代码目录。现在 ffmpeg 在会话目录内运行。
-- worker 正忙或短暂失联时，daemon 会在另一个数据目录里自己再开一个 Chrome 兜底，导致出现两套登录态（在一边登录，另一边看不到）。个人版默认关闭兜底，命令排队等 worker。
-- 体检在 Node 18 上会被 Playwright 直接退出、不输出任何结果；现在会先报「Node 太旧」。Linux 缺 Chromium 系统库时体检会明确列出。
+### Included
+- Shared-browser MCP service: open / read / snapshot / click / type / scroll / screenshot / persistent logins across multiple profiles.
+- TongPing card (MCP Apps): live view (WebSocket), audio, manual takeover (“Take control / Return to AI”).
+- Watch Together: delayed, buffered HLS playback; subtitles and images available to AI are limited by your viewing progress to avoid spoilers.
+- Group chat: one room for you and multiple AIs (claude.chat / claude.code / gpt.chat / gpt.codex …), with mute and clear controls.
+- OAuth 2.1 (dynamic registration + PKCE + password), automatically distinguishing claude.ai and ChatGPT card metadata rules.
+- Security: no AI typing in password fields, approval for each high-risk click, write freezes and rate budgets for Xiaohongshu/Douyin risk controls, audit logs that omit entered text.
 
-### 不包含
-- 多用户托管版（hosted）、云端 worker 配对与 Windows 安装包。
+### Added for Personal Edition
+- `npm run up`: starts the daemon + local worker with one command, handling pairing tokens, Host allowlists, and data subdirectories automatically.
+- `npm run selftest`: end-to-end checks (web pages, video, live view, group chat).
+- `npm run doctor`: health checks + redacted diagnostic summary.
+- `npm run asr:install`: one-command local subtitle installation (faster-whisper, automatic GPU/CPU selection, `--cn` for mainland China mirrors). AI can read dialogue even in videos without subtitles.
+- `npm run room:watch`: keeps local Claude Code / Codex listening to group chat, waking on new messages.
+- Group chat guide: `docs/GROUP-CHAT.md`.
+- Automatically loads `.env` from the project root.
+- `Start-TongPing.cmd` (Windows double-click launcher), `start.command` (macOS).
+- Installation / connection / upgrade / uninstall / AI troubleshooting guides, originally all in Chinese.
 
-### 已知限制
-- **只支持一台电脑、一个人。** 不做账号隔离、多用户鉴权和限流，不要部署成多人共用的服务。
-- **电脑必须开着。** 关机、睡眠、锁屏期间 AI 连不上；锁屏时陪看录制会暂停。
-- **网页版 AI 需要隧道。** claude.ai / ChatGPT 必须通过 HTTPS 隧道访问；Cloudflare 临时隧道每次重启地址都会变，需要重新添加连接器。
-- **陪看依赖 ffmpeg**，且默认延迟 30 秒；没装 ffmpeg 时陪看缓冲一直为 0（启动和 doctor 会提示）。
-- 本地字幕是可选安装（需要 Python，GPU 版下载约 3 GB）；字幕比画面晚 10–15 秒，开头第一段可能被跳过；CPU 版准确率较低。
-- **无窗口模式（TONGPING_HEADLESS=1）下的陪看和人工接管未经验证。**
-- **macOS 未实测**；Windows 11 与 Ubuntu 24.04（WSL）已按教程从零验证。
-- Claude / ChatGPT 的入口名称、套餐限制以官方为准，界面改版后教程截图式描述可能过时。
-- 网站风控：自动化操作可能触发小红书、抖音等网站的风控，同屏会自动冻结 AI 写操作，但无法保证账号不受影响。
+### Fixes (relative to internal versions)
+- After changing `TONGPING_PORT`, card addresses still pointed to 45921, breaking chat and video connections.
+- Default paths for Watch Together buffers, speech keys, viewing history, and other data now live under `TONGPING_HOME` instead of hardcoded server paths.
+- On Windows, ffmpeg wrote Watch Together HLS init segments to the launch directory (code folder), rather than the data directory. Playback could not retrieve them, and video content landed in the code folder. ffmpeg now runs inside the session directory.
+- When the worker was busy or briefly disconnected, the daemon opened a fallback Chrome in another data directory, creating two sets of login sessions (a login in one was invisible in the other). Personal Edition disables this fallback by default and queues commands for the worker.
+- On Node 18, Playwright exited the health check without output; it now reports “Node is too old” first. Missing Chromium system libraries on Linux are explicitly listed.
 
-### 升级注意
-- 首个版本，无需迁移。
+### Not included
+- Multi-user hosted edition, cloud-worker pairing, and a Windows installer.
+
+### Known limitations
+- **One computer, one user only.** No account isolation, multi-user authentication, or rate limiting; do not deploy as a shared multi-user service.
+- **The computer must stay on.** AI cannot connect during shutdown, sleep, or screen lock; Watch Together recording pauses while locked.
+- **Web-based AI requires a tunnel.** claude.ai / ChatGPT must connect through HTTPS. Temporary Cloudflare tunnel addresses change on restart, requiring connectors to be re-added.
+- **Watch Together requires ffmpeg**, with a default 30-second delay. Without ffmpeg, its buffer stays at 0 (startup and doctor report this).
+- Local subtitles are optional (require Python; GPU installation downloads about 3 GB). Subtitles lag the picture by 10–15 seconds; the first chunk may be skipped, and CPU accuracy is lower.
+- **Watch Together and manual takeover are untested in headless mode (`TONGPING_HEADLESS=1`).**
+- **macOS is untested**; Windows 11 and Ubuntu 24.04 (WSL) were verified from scratch using the guide.
+- Refer to official Claude / ChatGPT documentation for menu names and plan restrictions; interface changes may make the guide’s UI descriptions outdated.
+- Website anti-abuse systems: automation may trigger risk controls on sites such as Xiaohongshu and Douyin. TongPing automatically freezes AI write actions but cannot guarantee accounts remain unaffected.
+
+### Upgrade notes
+- First release; no migration needed.

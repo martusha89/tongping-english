@@ -28,7 +28,7 @@ test("buffered seek stays inside HLS and never calls source seek", () => {
   const block = app.slice(start, end);
   assert.ok(block.includes("if (insideBuffer)"));
   assert.ok(block.includes("video.currentTime = Math.max(0, mediaTime)"));
-  assert.ok(block.includes("保持陪看"));
+  assert.ok(block.includes("staying in Watch Together"));
   const inside = block.slice(block.indexOf("if (insideBuffer)"), block.indexOf("companionSeekPending = true"));
   assert.ok(!inside.includes("browser_app_companion_seek_source"));
 });
@@ -38,7 +38,7 @@ test("out-of-buffer seek uses source media seek and rebuilds companion epoch", (
   const end = app.indexOf("function updateCompanionPreparingUi", start);
   const block = app.slice(start, end);
   assert.ok(block.includes('"browser_app_companion_seek_source"'));
-  assert.ok(block.includes("超出当前缓存"));
+  assert.ok(block.includes("outside the current buffer"));
   assert.ok(block.includes("video.src = companionPlaybackWaitUrl()"));
   assert.ok(block.includes("scheduleCompanionProbe(250)"));
 

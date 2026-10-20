@@ -1,10 +1,10 @@
 export function renderLivePage(): string {
   return String.raw`<!doctype html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>同屏 · Live</title>
+  <title>TongPing · Live</title>
   <style>
     :root { color-scheme: light dark; font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
     * { box-sizing: border-box; }
@@ -38,12 +38,12 @@ export function renderLivePage(): string {
 <body>
 <main>
   <div class="bar">
-    <input id="token" type="password" autocomplete="off" placeholder="daemon token（只存在本页 session）" />
-    <input id="profile" value="goofish" placeholder="profile，例如 goofish / douyin" />
-    <button id="connect" class="primary">连接</button>
+    <input id="token" type="password" autocomplete="off" placeholder="daemon token (stored only for this session)" />
+    <input id="profile" value="goofish" placeholder="profile, e.g. goofish / douyin" />
+    <button id="connect" class="primary">Connect</button>
   </div>
 
-  <div id="status">未连接。</div>
+  <div id="status">Not connected.</div>
   <div id="approvals"></div>
 
   <div id="frameWrap">
@@ -52,18 +52,18 @@ export function renderLivePage(): string {
 
   <div class="controls">
     <div class="row">
-      <button id="takeover" class="primary">接管浏览器</button>
+      <button id="takeover" class="primary">Take control</button>
       <button data-key="Enter">Enter</button>
       <button data-key="Escape">Esc</button>
       <button data-key="Tab">Tab</button>
       <button data-key="Backspace">⌫</button>
     </div>
     <div class="row">
-      <input id="text" placeholder="接管后：点画面定位输入框，再在这里输入文字" />
-      <button id="sendText">输入</button>
+      <input id="text" placeholder="After taking over, click a field in the view, then type here" />
+      <button id="sendText">Type</button>
     </div>
     <div class="hint">
-      画面默认只读。模型遇到购买/支付/删除等高风险按钮时，只能先发审批请求；你可以在上方批准或拒绝。批准只对那个精确按钮生效一次，并会过期。需要验证码或密码时再点“接管浏览器”，直接由你输入；点“还给模型”后恢复自动控制。
+      The view is read-only by default. For high-risk actions such as purchases, payments, or deletions, the model must request approval first; approve or deny above. Approval applies once to that exact button and expires. For verification codes or passwords, select “Take control” and enter them yourself; select “Return to AI” to resume automated control.
     </div>
   </div>
 </main>
@@ -128,17 +128,17 @@ export function renderLivePage(): string {
       card.className = "approval";
 
       const title = document.createElement("strong");
-      title.textContent = "模型请求高风险操作";
+      title.textContent = "The model requests a high-risk action";
 
       const target = document.createElement("div");
-      target.textContent = item.targetSummary || "(无法读取按钮文本)";
+      target.textContent = item.targetSummary || "(Button text unavailable)";
 
       const meta = document.createElement("div");
       meta.className = "meta";
       const bits = [];
-      if (item.requestedBy) bits.push("请求：" + item.requestedBy);
-      if (item.reason) bits.push("原因：" + item.reason);
-      if (item.expiresAt) bits.push("过期：" + new Date(item.expiresAt).toLocaleTimeString());
+      if (item.requestedBy) bits.push("Requested by: " + item.requestedBy);
+      if (item.reason) bits.push("Reason: " + item.reason);
+      if (item.expiresAt) bits.push("Expires: " + new Date(item.expiresAt).toLocaleTimeString());
       meta.textContent = bits.join(" · ");
 
       const actions = document.createElement("div");
@@ -146,12 +146,12 @@ export function renderLivePage(): string {
 
       const approve = document.createElement("button");
       approve.className = "approve";
-      approve.textContent = "批准一次";
+      approve.textContent = "Approve once";
       approve.addEventListener("click", () => decideApproval(item.id, true));
 
       const deny = document.createElement("button");
       deny.className = "danger";
-      deny.textContent = "拒绝";
+      deny.textContent = "Deny";
       deny.addEventListener("click", () => decideApproval(item.id, false));
 
       actions.append(approve, deny);
@@ -168,7 +168,7 @@ export function renderLivePage(): string {
       });
       await refreshStatus();
     } catch (error) {
-      status.textContent = "审批失败：" + error.message;
+      status.textContent = "Approval failed: " + error.message;
     }
   }
 
@@ -179,13 +179,13 @@ export function renderLivePage(): string {
     const data = await response.json();
 
     takeoverActive = Boolean(data.takeover && data.takeover.active);
-    takeover.textContent = takeoverActive ? "还给模型" : "接管浏览器";
+    takeover.textContent = takeoverActive ? "Return to AI" : "Take control";
     takeover.className = takeoverActive ? "danger" : "primary";
 
     const url =
       data.browser && data.browser.url
         ? data.browser.url
-        : "(尚未打开页面)";
+        : "(No page open yet)";
     const owner = takeoverActive
       ? " · HUMAN " + (data.takeover.owner || "")
       : " · MODEL";
@@ -221,13 +221,13 @@ export function renderLivePage(): string {
     try {
       await Promise.all([refreshStatus(), refreshFrame()]);
     } catch (error) {
-      status.textContent = "连接错误：" + error.message;
+      status.textContent = "Connection error: " + error.message;
     }
   }
 
   connect.addEventListener("click", async () => {
     if (!token.value.trim() || !profile.value.trim()) {
-      status.textContent = "需要 token 和 profile。";
+      status.textContent = "Token and profile are required.";
       return;
     }
     sessionStorage.setItem("tongping-token", token.value);
@@ -252,7 +252,7 @@ export function renderLivePage(): string {
       });
       await refreshStatus();
     } catch (error) {
-      status.textContent = "接管切换失败：" + error.message;
+      status.textContent = "Could not change control: " + error.message;
     }
   });
 
@@ -278,7 +278,7 @@ export function renderLivePage(): string {
       });
       await refreshFrame();
     } catch (error) {
-      status.textContent = "点击失败：" + error.message;
+      status.textContent = "Click failed: " + error.message;
     }
   });
 
@@ -295,7 +295,7 @@ export function renderLivePage(): string {
       text.value = "";
       await refreshFrame();
     } catch (error) {
-      status.textContent = "输入失败：" + error.message;
+      status.textContent = "Typing failed: " + error.message;
     }
   });
 
@@ -316,7 +316,7 @@ export function renderLivePage(): string {
         });
         await refreshFrame();
       } catch (error) {
-        status.textContent = "按键失败：" + error.message;
+        status.textContent = "Key press failed: " + error.message;
       }
     });
   });

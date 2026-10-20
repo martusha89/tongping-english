@@ -4,7 +4,7 @@ import tls from "node:tls";
 import type { Duplex } from "node:stream";
 
 /**
- * The Worker's long-lived sockets (live frames, control, audio, 陪看 media)
+ * The Worker's long-lived sockets (live frames, control, audio, Watch Together media)
  * use `ws`, which ignores HTTPS_PROXY. On a home line where the direct route
  * to the server drops half its packets but the user's proxy is clean, those
  * sockets need the proxy too: tunnel them with an HTTP CONNECT.

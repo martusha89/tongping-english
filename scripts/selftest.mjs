@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-// 同屏 TongPing 个人版 自检：在 `npm run up` 已经运行的前提下，
-// 通过真正的 MCP 协议把三件事各走一遍：
-//   1. 逛网页：打开一个页面并读出标题和正文
-//   2. 看视频：打开一个带 <video> 的页面，读媒体状态（播放时间在走）
-//   3. 聊天：AI 发群聊 → 另一个 AI 读到；人类从卡片发消息 → AI 读到
-// 用法：npm run selftest            （默认连 http://127.0.0.1:45921）
+// TongPing Personal Edition self-test: with `npm run up` already running,
+// exercise three workflows through the real MCP protocol:
+//   1. Browsing: open a page and read its title and text
+//   2. Video: open a page with <video>, read media state (playback time advances)
+//   3. Chat: AI posts → another AI reads; human posts in card → AI reads
+// Usage: npm run selftest            (connects to http://127.0.0.1:45921 by default)
 //       npm run selftest -- --video https://example.com/some-video-page
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
@@ -30,7 +30,7 @@ const VIDEO_URL = argValue("--video", "https://interactive-examples.mdn.mozilla.
 const PROFILE = argValue("--profile", "selftest");
 
 if (!existsSync(tokenFile)) {
-  fail(`找不到 daemon 令牌 ${tokenFile}。先运行 npm run up，并确认 TONGPING_HOME 和启动时一致。`);
+  fail(`Daemon token not found at ${tokenFile}. Run npm run up first and use the same TONGPING_HOME as at startup.`);
 }
 const token = readFileSync(tokenFile, "utf8").trim();
 let sessionId = "";
@@ -85,16 +85,16 @@ async function step(label, fn) {
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-console.log(`同屏自检 → ${base}  (profile=${PROFILE})\n`);
+console.log(`TongPing self-test → ${base}  (profile=${PROFILE})\n`);
 
-await step("health：daemon 在线，worker 已连接", async () => {
+await step("health: daemon online, worker connected", async () => {
   const health = await (await fetch(base + "/health")).json();
   if (!health.ok) throw new Error("health.ok=false");
-  if (!health.worker?.connected) throw new Error("worker 没连上：npm run up 的窗口里看 [worker] 开头的报错");
+  if (!health.worker?.connected) throw new Error("Worker not connected: check [worker] errors in the npm run up window");
   return `workerBuild=${health.workerBuild}`;
 });
 
-await step("MCP 握手 + 工具列表", async () => {
+await step("MCP handshake + tool list", async () => {
   const init = await rpc("initialize", {
     protocolVersion: "2025-06-18",
     capabilities: {},
@@ -104,38 +104,38 @@ await step("MCP 握手 + 工具列表", async () => {
   const list = await rpc("tools/list", {});
   const names = list.tools.map((t) => t.name);
   for (const must of ["browser_open", "browser_read", "browser_app", "browser_app_chat_push", "browser_app_room_read"]) {
-    if (!names.includes(must)) throw new Error("缺少工具 " + must);
+    if (!names.includes(must)) throw new Error("Missing tool " + must);
   }
-  return `${init.serverInfo?.name} · ${names.length} 个工具`;
+  return `${init.serverInfo?.name} · ${names.length} tools`;
 });
 
-await step("逛网页：打开页面并读正文", async () => {
+await step("Browsing: open a page and read its text", async () => {
   // A Chrome launch can stall once (antivirus scan, leftover process).
   // Retry a single time before calling it a failure.
   try {
     await tool("browser_open", { profile: PROFILE, url: PAGE_URL });
   } catch (error) {
     if (!/did not answer in time|Timeout \d+ms exceeded/.test(String(error?.message))) throw error;
-    console.log("   …启动浏览器超时，自动重试一次");
+    console.log("   …Browser startup timed out; retrying once automatically");
     await sleep(5_000);
     await tool("browser_open", { profile: PROFILE, url: PAGE_URL });
   }
   const read = await tool("browser_read", { profile: PROFILE });
   const blob = read.text;
   if (!/Example Domain|example/i.test(blob) && PAGE_URL.includes("example.com")) {
-    throw new Error("没读到 example.com 的正文：" + blob.slice(0, 200));
+    throw new Error("Could not read example.com text: " + blob.slice(0, 200));
   }
-  return `读到 ${blob.length} 字符`;
+  return `Read ${blob.length} characters`;
 });
 
-await step("看视频：打开带视频的页面，读播放状态", async () => {
+await step("Video: open a video page and read playback state", async () => {
   await tool("browser_open", { profile: PROFILE, url: VIDEO_URL });
   await sleep(1_000);
   // Start playback the way a user would: a real click on the video element.
   const snap = await tool("browser_snapshot", { profile: PROFILE });
   const first = await tool("browser_media_context", { profile: PROFILE, lookbackSeconds: 30, maxCues: 5 });
   const media = findMedia(first.json);
-  if (!media) throw new Error("页面上没找到可读的 <video>：" + first.text.slice(0, 300));
+  if (!media) throw new Error("No readable <video> found on the page: " + first.text.slice(0, 300));
   if (media.paused !== false) {
     // Autoplay is often blocked; press play through the page itself.
     const ref = findVideoRef(snap.json);
@@ -149,37 +149,37 @@ await step("看视频：打开带视频的页面，读播放状态", async () =>
   const advanced = t1 && t2 && Number(t2.currentTime) > Number(t1.currentTime);
   const finished = t2 && Number(t2.currentTime) > 0 && Number(t2.duration) > 0 &&
     Number(t2.currentTime) >= Number(t2.duration) - 0.25;
-  if (finished && !advanced) return `短片已完整播放（${Number(t2.duration).toFixed(1)}s）`;
+  if (finished && !advanced) return `Clip finished playing (${Number(t2.duration).toFixed(1)}s)`;
   if (!advanced) {
-    throw new Error(`视频播放时间没有前进 (${t1?.currentTime} → ${t2?.currentTime}, paused=${t2?.paused})`);
+    throw new Error(`Video playback time did not advance (${t1?.currentTime} → ${t2?.currentTime}, paused=${t2?.paused})`);
   }
-  return `currentTime ${Number(t1.currentTime).toFixed(1)}s → ${Number(t2.currentTime).toFixed(1)}s，时长 ${t2.duration ?? "?"}s`;
+  return `currentTime ${Number(t1.currentTime).toFixed(1)}s → ${Number(t2.currentTime).toFixed(1)}s, duration ${t2.duration ?? "?"}s`;
 });
 
-await step("看视频：截一帧画面", async () => {
+await step("Video: capture a frame", async () => {
   const shot = await rpc("tools/call", { name: "browser_screenshot", arguments: { profile: PROFILE } });
   const image = (shot.content ?? []).find((c) => c.type === "image");
-  if (!image) throw new Error("截图结果里没有图片");
-  return `JPEG/PNG base64 ${image.data.length} 字符`;
+  if (!image) throw new Error("No image in screenshot result");
+  return `JPEG/PNG base64 ${image.data.length} characters`;
 });
 
 let ticket = null;
 let liveUrl = null;
 let mediaUrl = null;
 let hlsUrl = null;
-await step("打开同屏卡片（拿到卡片票据）", async () => {
+await step("Open TongPing card (obtain a card ticket)", async () => {
   const app = await tool("browser_app", { profile: PROFILE, identity: "claude.code" });
   ticket = findChatTicket(app.result);
   liveUrl = findUrl(app.result, /\/v1\/app\/live-ws\?/);
   mediaUrl = findUrl(app.result, /\/v1\/app\/media-ws\?/);
   hlsUrl = findUrl(app.result, /\/v1\/app\/companion-hls\?/);
-  if (!ticket) throw new Error("browser_app 结果里没找到 chat 票据");
-  if (!liveUrl) throw new Error("browser_app 结果里没找到 live-ws 地址（worker 版本太旧？）");
+  if (!ticket) throw new Error("No chat ticket in browser_app result");
+  if (!liveUrl) throw new Error("No live-ws URL in browser_app result (worker too old?)");
   return "ok";
 });
 
-await step("看视频：卡片实时画面（WebSocket 连续收帧）", async () => {
-  if (!liveUrl) throw new Error("上一步没拿到 live-ws 地址");
+await step("Video: card live view (continuous WebSocket frames)", async () => {
+  if (!liveUrl) throw new Error("Previous step did not obtain a live-ws URL");
   await tool("browser_open", { profile: PROFILE, url: VIDEO_URL });
   const stats = await new Promise((resolve, reject) => {
     const ws = new WebSocket(liveUrl, { headers: { origin: base } });
@@ -192,20 +192,20 @@ await step("看视频：卡片实时画面（WebSocket 连续收帧）", async (
       ws.send(JSON.stringify({ type: "frame_ready", outcome: "presented", presentedAt: Date.now() }));
     });
     ws.on("error", (error) => { clearTimeout(timer); reject(error); });
-    ws.on("close", (code) => { if (frames === 0 && code !== 1005) { clearTimeout(timer); reject(new Error("live-ws 关闭 code=" + code)); } });
+    ws.on("close", (code) => { if (frames === 0 && code !== 1005) { clearTimeout(timer); reject(new Error("live-ws closed with code=" + code)); } });
   });
-  if (stats.frames < 5) throw new Error(`6 秒只收到 ${stats.frames} 帧（正常应 ≥5）`);
-  return `6 秒收到 ${stats.frames} 帧，${Math.round(stats.bytes / 1024)} KB`;
+  if (stats.frames < 5) throw new Error(`Only ${stats.frames} frames in 6 seconds (expected ≥5)`);
+  return `Received ${stats.frames} frames in 6 seconds, ${Math.round(stats.bytes / 1024)} KB`;
 });
 
 const hasFfmpeg = (() => {
   try { return spawnSync("ffmpeg", ["-version"], { stdio: "ignore", windowsHide: true }).status === 0; } catch { return false; }
 })();
 if (!hasFfmpeg) {
-  console.log("⏭️  陪看：跳过（本机没有 ffmpeg；装好后重开终端再跑自检即可测这一项）");
+  console.log("⏭️  Watch Together: skipped (ffmpeg not found; install it, reopen the terminal, and rerun the self-test to check this)");
 } else {
-  await step("看视频：陪看缓冲出片（ffmpeg → HLS）", async () => {
-    if (!mediaUrl || !hlsUrl) throw new Error("browser_app 结果里没找到陪看地址");
+  await step("Video: Watch Together buffer produces segments (ffmpeg → HLS)", async () => {
+    if (!mediaUrl || !hlsUrl) throw new Error("No Watch Together URLs in browser_app result");
     await tool("browser_open", { profile: PROFILE, url: VIDEO_URL });
     const ws = new WebSocket(mediaUrl, { headers: { origin: base } });
     await new Promise((resolve, reject) => { ws.once("open", resolve); ws.once("error", reject); });
@@ -230,55 +230,55 @@ if (!hasFfmpeg) {
       const segments = (playlist.match(/\.m4s/g) || []).length;
       if (segments < 2) {
         const buffered = /#TONGPING-BUFFERED-SECONDS:([0-9.]+)/.exec(playlist)?.[1];
-        throw new Error(`60 秒内没有出片（缓冲 ${buffered ?? "?"} 秒）。看 npm run doctor 的 companion 项`);
+        throw new Error(`No segments produced within 60 seconds (${buffered ?? "?"} seconds buffered). Check the companion item in npm run doctor`);
       }
       const init = /#EXT-X-MAP:URI="([^"]+)"/.exec(playlist)?.[1];
-      if (!init) throw new Error("播放列表里没有 init 分片");
+      if (!init) throw new Error("No init segment in playlist");
       const initResponse = await fetch(new URL(init, playlistUrl));
-      if (!initResponse.ok) throw new Error(`init 分片取不到 HTTP ${initResponse.status}`);
+      if (!initResponse.ok) throw new Error(`Cannot fetch init segment: HTTP ${initResponse.status}`);
       const bytes = (await initResponse.arrayBuffer()).byteLength;
-      return `${segments} 个分片，init ${bytes} 字节`;
+      return `${segments} segments, init ${bytes} bytes`;
     } finally {
       ws.close();
     }
   });
 }
 
-await step("聊天：AI 发言 → 另一个 AI 读到", async () => {
+await step("Chat: AI posts → another AI reads it", async () => {
   const marker = "selftest-" + Date.now().toString(36);
-  await tool("browser_app_chat_push", { identity: "claude.code", profile: PROFILE, text: "你好，我是自检里的 Claude。" + marker });
+  await tool("browser_app_chat_push", { identity: "claude.code", profile: PROFILE, text: "Hello, I am Claude in the self-test. " + marker });
   const read = await tool("browser_app_room_read", { identity: "gpt.chat", limit: 50 });
   const hit = (read.json?.unread ?? []).find((m) => String(m.text).includes(marker));
-  if (!hit) throw new Error("gpt.chat 没读到 claude.code 的消息");
-  return `gpt.chat 读到 seq=${hit.seq} from=${hit.from}`;
+  if (!hit) throw new Error("gpt.chat did not read claude.code's message");
+  return `gpt.chat read seq=${hit.seq} from=${hit.from}`;
 });
 
-await step("聊天：人在卡片里发消息 → AI 读到", async () => {
-  if (!ticket) throw new Error("上一步没拿到票据");
+await step("Chat: human posts in card → AI reads it", async () => {
+  if (!ticket) throw new Error("Previous step did not obtain a ticket");
   const marker = "human-" + Date.now().toString(36);
   const url = new URL(ticket);
   const response = await fetch(url, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ text: "（自检）人类说：在吗？" + marker, clientId: marker }),
+    body: JSON.stringify({ text: "(Self-test) Human says: Are you there? " + marker, clientId: marker }),
   });
   const body = await response.text();
-  if (!response.ok) throw new Error(`卡片发消息失败 HTTP ${response.status} ${body.slice(0, 200)}`);
+  if (!response.ok) throw new Error(`Card message failed: HTTP ${response.status} ${body.slice(0, 200)}`);
   await sleep(300);
   const read = await tool("browser_app_room_read", { identity: "claude.code", limit: 50 });
   const hit = (read.json?.unread ?? []).find((m) => String(m.text).includes(marker));
-  if (!hit) throw new Error("claude.code 没读到人类消息");
-  return `claude.code 读到 from=${hit.from}`;
+  if (!hit) throw new Error("claude.code did not read the human message");
+  return `claude.code read from=${hit.from}`;
 });
 
-await step("收尾：关闭自检用的浏览器页面", async () => {
+await step("Cleanup: close the self-test browser pages", async () => {
   await tool("browser_close_profile", { profile: PROFILE }).catch(() => {});
   return "ok";
 });
 
 const failed = results.filter((r) => !r.ok);
 console.log("");
-console.log(failed.length ? `自检结束：${failed.length} 项失败（把上面整段贴给 AI，并让它读 docs/TROUBLESHOOTING.md）` : "自检全部通过 🎉");
+console.log(failed.length ? `Self-test finished: ${failed.length} checks failed (send the full output above to AI and ask it to read docs/TROUBLESHOOTING.md)` : "All self-tests passed 🎉");
 process.exit(failed.length ? 1 : 0);
 
 function findMedia(value) {
@@ -345,6 +345,6 @@ function expandHome(value) {
 }
 
 function fail(message) {
-  console.error("错误：" + message);
+  console.error("Error: " + message);
   process.exit(1);
 }

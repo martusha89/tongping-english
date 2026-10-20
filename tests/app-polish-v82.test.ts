@@ -16,7 +16,7 @@ test("the menu is laid out as fields, paired actions, skins and a footer", () =>
   const menu = app.slice(app.indexOf('<div class="menuSheet"'), app.indexOf('<div class="skinToast"'));
   assert.ok(menu.indexOf('class="menuField"') < menu.indexOf('class="menuActions"'));
   assert.ok(menu.indexOf('class="menuActions"') < menu.indexOf('id="menuSkins"'));
-  assert.match(menu, /id="fullscreen" class="actionButton"[\s\S]*?<span class="buttonLabel">全屏<\/span>/);
+  assert.match(menu, /id="fullscreen" class="actionButton"[\s\S]*?<span class="buttonLabel">Fullscreen<\/span>/);
 });
 
 test("the ticket sheet opens from the top, clear of the host composer", () => {

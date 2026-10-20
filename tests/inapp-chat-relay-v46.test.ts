@@ -42,7 +42,7 @@ test("MCP server exposes one assistant mirror tool and app state chat URL", () =
   );
   assert.match(source, /state.chatUrl = createBrowserChatUrl/);
   assert.match(source, /role: "assistant"/);
-  assert.match(source, /Post your reply into the 同屏 group chat/);
+  assert.match(source, /Post your reply into the TongPing group chat/);
 });
 
 test("daemon exposes signed direct chat GET and POST routes", () => {
@@ -66,7 +66,7 @@ test("browser app renders both roles and requests exact reply mirroring", () => 
   assert.match(app, /chatRow.user/);
   assert.match(app, /chatRow.assistant/);
   assert.match(app, /white-space:pre-wrap/);
-  assert.match(app, /正在回复/);
+  assert.match(app, /Replying/);
   assert.match(app, /browser_app_chat_push exactly once/);
   assert.match(app, /FIRST ACTION of your reply, before writing any text/);
   assert.match(app, /shared-browser-v93/);

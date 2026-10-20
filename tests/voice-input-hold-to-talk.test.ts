@@ -6,7 +6,7 @@ import { decodeSenseVoiceText } from "../src/voice-input.js";
 test("SenseVoice emotion emoji becomes a label; neutral speech gets none", () => {
   assert.deepEqual(decodeSenseVoiceText("今天这集好好笑😊"), {
     text: "今天这集好好笑",
-    emotion: "开心",
+    emotion: "happy",
     emoji: "😊",
   });
   assert.deepEqual(decodeSenseVoiceText("我们看下一集吧"), {
@@ -19,7 +19,7 @@ test("SenseVoice emotion emoji becomes a label; neutral speech gets none", () =>
 test("background audio events are dropped, not labelled", () => {
   const result = decodeSenseVoiceText("🎼😀他刚才说什么😮");
   assert.equal(result.text, "他刚才说什么");
-  assert.equal(result.emotion, "惊讶");
+  assert.equal(result.emotion, "surprised");
 });
 
 test("raw SenseVoice tags never leak into the transcript", () => {

@@ -48,7 +48,7 @@ interface RoomFile {
 
 // v90 group chat: one room shared by the user and every AI (Claude, ChatGPT, ...),
 // whichever card or profile they come from. Each message keeps the speaker's
-// identity. An AI that the user mutes cannot post until they unmutes it. The
+// identity. An AI that the user mutes cannot post until they unmute it. The
 // room survives daemon restarts when a state file is configured.
 export class AppChatRoom {
   private nextSeq = 1;
@@ -74,7 +74,7 @@ export class AppChatRoom {
     const role = input.role;
     if (role === "assistant" && this.muted.has(identity)) {
       throw new Error(
-        "The user has muted " + identity + " in the 同屏 group chat. Do not post there until they unmute you; you can still answer them in your own conversation.",
+        "The user has muted " + identity + " in the TongPing group chat. Do not post there until they unmute you; you can still answer them in your own conversation.",
       );
     }
     const maxChars = role === "assistant" ? MAX_ASSISTANT_CHARS : MAX_USER_CHARS;
@@ -169,7 +169,7 @@ export class AppChatRoom {
     return this.muted.has(normalizeIdentity(identity));
   }
 
-  // The user's 「清空」: drop every message but keep seq numbers moving forward,
+  // The user's "Clear" action: drop every message but keep seq numbers moving forward,
   // so cards and room watchers polling with after=N still see new messages.
   // Mutes and read cursors stay.
   clearMessages(): number {

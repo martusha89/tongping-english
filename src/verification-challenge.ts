@@ -1,7 +1,7 @@
 /**
  * Recognise a site's human-verification step (slider, login wall, risk
  * page) on the shopping sites whose bot checks always reject the automated
- * 同屏 browser. The Worker then hands the page to a normal local Chrome so
+ * TongPing browser. The Worker then hands the page to a normal local Chrome so
  * the user can pass it herself; nothing here tries to solve anything.
  */
 
@@ -39,7 +39,7 @@ export const CHALLENGE_DOM_PROBE = `(() => {
   const selectors = [
     "#nc_1_n1z", "#nc_1_wrapper", ".nc_wrapper", ".nc-container",
     "#baxia-dialog-content", "iframe[src*='punish']", "iframe[src*='_____tmd_____']",
-    // 极验 (geetest), used by Bilibili and others.
+    // Geetest, used by Bilibili and others.
     ".geetest_panel_box", ".geetest_box", ".geetest_widget",
   ];
   for (const selector of selectors) {

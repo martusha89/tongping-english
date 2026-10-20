@@ -22,7 +22,7 @@ test("the ticket is a 3:1 stub drawn at 2x from the presented frame with real se
     'const W = 1800;',
     'const H = 600;',
     'captureCurrentDisplayedFrame()',
-    'WATCH MEMORY TICKET · 陪看纪念票根',
+    'WATCH MEMORY TICKET',
     'WATCHED',
     'TOGETHER',
     'ADMIT TWO',
@@ -37,7 +37,7 @@ test("the ticket is a 3:1 stub drawn at 2x from the presented frame with real se
 
 test("the ticket stays local: no AI ticket button and nothing sent to the AI", () => {
   assert.ok(!app.includes("ticketAiGenerate"), "AI ticket button removed");
-  assert.ok(!app.includes("生成 AI 纪念票"));
+  assert.ok(!app.includes("Generate AI memory ticket"));
   assert.ok(!app.includes("requestAiWatchTicket"));
   assert.ok(!app.includes('call("browser_app_ticket_share"'), "card never shares tickets with the AI");
   assert.ok(!app.includes("WATCH_TICKET_AI_REQUEST"));
@@ -51,10 +51,10 @@ test("collection mode is explicitly opt-in and default path does not create an i
   assert.ok(ensure >= 0);
   assert.ok(app.includes('safeLocalGet(WATCH_COLLECTION_ID_KEY)'));
   assert.ok(app.includes('showTicketPrivacy()'));
-  assert.ok(app.includes('同意并开启'));
-  assert.ok(app.includes('默认关闭'));
-  assert.ok(app.includes('不会保存原始视频'));
-  assert.ok(app.includes('不会额外保存原始截图'));
+  assert.ok(app.includes('Agree and enable'));
+  assert.ok(app.includes('Off by default'));
+  assert.ok(app.includes('Original video and separate screenshots are not saved'));
+  assert.ok(app.includes('Original video and separate screenshots are not saved'));
 });
 
 test("collection API supports enable disable add delete clear and destroy behind signed profile authority", () => {
@@ -87,14 +87,14 @@ test("collection stores finished ticket only, not a second raw frame field", () 
 test("library UI exposes disable, delete and two-step clear semantics", () => {
   assert.ok(app.includes("disableWatchCollection"));
   assert.ok(app.includes('data-ticket-id'));
-  assert.ok(app.includes('再点一次确认'));
+  assert.ok(app.includes('Select again to confirm'));
   assert.ok(app.includes('watchCollectionRequest("clear")'));
 });
 
 test("group chat has a two-tap clear that follows the server clear point", () => {
   assert.ok(app.includes('id="chatClear"'));
   assert.ok(app.includes('JSON.stringify({ action: "clear" })'));
-  assert.ok(app.includes('button.textContent = "确认清空？";'));
+  assert.ok(app.includes('button.textContent = "Confirm clear?";'));
   assert.ok(app.includes("dropClearedChat(data.clearedThroughSeq);"));
   assert.ok(!/\bconfirm\(/.test(app), "no browser dialogs inside the host");
 });

@@ -1,4 +1,4 @@
-"""同屏 TongPing local transcription service (optional, for subtitles).
+"""TongPing local transcription service (optional, for subtitles).
 
 Started by the worker when installed (`npm run asr:install`). Nothing leaves
 this computer except the one-time model download.

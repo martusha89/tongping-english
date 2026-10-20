@@ -11,11 +11,11 @@ export function renderClaudeBrowserApp(publicOrigin: string): string {
   );
 }
 
-// 2026-09-20: 从「诊断仪」改成「操作台」。
-// 原来只有 frame 图 + STAGES，用户点了也传不回去。
-// 现在接管 / 点画面 / 打字 / Enter / Esc / 地址栏全有，
-// 交互逻辑照 browser-app.ts（ChatGPT 那张）抄，但 meta 走 Claude 专线。
-const CLAUDE_LAB_HTML = String.raw`<!doctype html><html lang="zh-CN"><head>
+// 2026-09-20: changed from a diagnostic viewer into a full control console.
+// The old version only showed the frame and stages; user clicks could not be relayed.
+// Takeover, direct frame clicks, typing, Enter, Esc, and the address bar are now included.
+// Interaction behavior follows browser-app.ts (the ChatGPT card), while metadata uses Claude's dedicated path.
+const CLAUDE_LAB_HTML = String.raw`<!doctype html><html lang="en"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <style>
@@ -59,38 +59,38 @@ pre{margin:0;padding:8px;max-height:150px;overflow:auto;font-size:11px;
 
 <section class="panel">
   <div class="bar">
-    <span class="badge">CLAUDE 操作台</span>
+    <span class="badge">CLAUDE CONSOLE</span>
     <input id="profile" value="default" aria-label="profile" style="max-width:110px;flex:0 1 110px">
-    <input id="addr" placeholder="网址，回车前往" aria-label="url">
-    <button id="go">前往</button>
+    <input id="addr" placeholder="URL, press Enter to open" aria-label="url">
+    <button id="go">Go</button>
   </div>
 
   <div id="viewportWrap">
-    <img id="frame" alt="同屏 画面">
-    <div id="empty">连接中…</div>
+    <img id="frame" alt="TongPing browser view">
+    <div id="empty">Connecting…</div>
     <div id="hint"></div>
     <div id="ping"></div>
   </div>
 
   <div class="bar bot">
-    <button id="takeover" class="primary">我来操作</button>
-    <button id="refresh">刷新帧</button>
+    <button id="takeover" class="primary">Take control</button>
+    <button id="refresh">Refresh frame</button>
     <button id="key-Enter">Enter</button>
     <button id="key-Escape">Esc</button>
-    <button id="fullscreen">全屏</button>
+    <button id="fullscreen">Fullscreen</button>
   </div>
   <div class="bar bot">
-    <input id="humanText" placeholder="接管后，先点画面里的输入框，再从这里打字">
-    <button id="send">输入</button>
+    <input id="humanText" placeholder="After taking control, click a field in the view, then type here">
+    <button id="send">Type</button>
   </div>
 
-  <div class="meta"><b>状态</b><span id="mode">模型控制中</span>
+  <div class="meta"><b>Status</b><span id="mode">Model in control</span>
                     <b>url</b><span id="url">-</span>
                     <b>title</b><span id="title">-</span></div>
   <div id="msg"></div>
 
   <details>
-    <summary>桥接诊断（STAGES）</summary>
+    <summary>Bridge diagnostics (STAGES)</summary>
     <div class="bar" style="border:0">
       <button id="context">host context</button><button id="probe">env probe</button>
     </div>
@@ -134,7 +134,7 @@ $("probe").addEventListener("click",function(){LOG("env-probe",envProbe())});
 
 function withTimeout(p,ms,label){
   return Promise.race([p,new Promise(function(_,rj){
-    setTimeout(function(){rj(new Error(label+" 超时 "+ms+"ms"))},ms)})]);
+    setTimeout(function(){rj(new Error(label+" timed out after "+ms+"ms"))},ms)})]);
 }
 
 var connected=false,busy=false,displayMode="inline",app=null,poll=null;
@@ -154,14 +154,15 @@ function structured(r){
     ? r.structuredContent : null;
 }
 async function call(name,a){
-  if(!connected||!app)throw new Error("桥还没连上");
-  // 远程 worker（用户电脑）单次往返实测 11.7s，截图更慢。20s 太紧：
-  // 动作其实执行了、回执没等到，卡片却报「超时」——2026-09-20 踩过。
+  if(!connected||!app)throw new Error("Bridge is not connected");
+  // A remote worker round trip from the user's computer measured 11.7 seconds,
+  // and screenshots are slower. A 20-second timeout produced false failures when
+  // the action completed but its receipt arrived late (observed 2026-09-20).
   var r=await withTimeout(app.callServerTool({name:name,arguments:a||{}}),75000,name);
   if(r&&r.isError){
     var t=Array.isArray(r.content)
       ? r.content.map(function(x){return x&&x.type==="text"?x.text:""}).filter(Boolean).join(" ") : "";
-    throw new Error(t||"工具返回 isError");
+    throw new Error(t||"Tool returned isError");
   }
   return structured(r);
 }
@@ -177,14 +178,14 @@ function applyState(d){
   }
   $("url").textContent=S.url||"-";
   $("title").textContent=S.title||"-";
-  $("takeover").textContent=S.takeover?"还给模型":"我来操作";
+  $("takeover").textContent=S.takeover?"Return to AI":"Take control";
   $("takeover").className=S.takeover?"live":"primary";
-  $("mode").textContent=S.takeover?"你在操作 — 点画面即可":"模型控制中";
+  $("mode").textContent=S.takeover?"You are in control — click the view":"Model in control";
   $("mode").className=S.takeover?"ok":"";
   $("frame").className=S.takeover?"hot":"";
   $("hint").className=S.takeover?"on":"";
   $("hint").textContent=S.takeover
-    ? "点画面 = 真实点击"+(S.viewport.width?(" · 视口 "+S.viewport.width+"×"+S.viewport.height):"")
+    ? "Click view = real click"+(S.viewport.width?(" · viewport "+S.viewport.width+"×"+S.viewport.height):"")
     : "";
   stage("takeover",S.takeover?"ok":"idle",S.takeover?"active":"");
   if(d.frameUrl){
@@ -198,7 +199,7 @@ $("frame").addEventListener("load",function(){
   stage("frameImage","ok",$("frame").naturalWidth+"x"+$("frame").naturalHeight);
 });
 $("frame").addEventListener("error",function(){
-  stage("frameImage","fail","img error — CSP 或签名过期");
+  stage("frameImage","fail","image error — CSP or signature expired");
 });
 
 async function refresh(){
@@ -216,12 +217,12 @@ async function refresh(){
 }
 function startPoll(){
   stopPoll();
-  // 接管时画面要跟手，两秒一帧；模型控制时不轮询，省得白刷
+  // During takeover, refresh every two seconds for responsive control; do not poll while the model controls it.
   if(S.takeover)poll=setInterval(function(){refresh()},6000);
 }
 function stopPoll(){if(poll){clearInterval(poll);poll=null}}
 
-// ── 点画面 = 真实点击。换算成视口逻辑坐标，跟 ChatGPT 卡片同一套 ──
+  // A click in the view is a real click. Convert it to logical viewport coordinates, as in the ChatGPT card.
 function logicalPoint(clientX,clientY){
   var f=$("frame"),r=f.getBoundingClientRect();
   var lw=Number(S.viewport.width||f.naturalWidth||0);
@@ -231,32 +232,32 @@ function logicalPoint(clientX,clientY){
           y:Math.max(0,Math.min(lh,(clientY-r.top)*lh/r.height))};
 }
 $("frame").addEventListener("click",async function(ev){
-  if(!S.takeover){say("先点「我来操作」，接管之后画面才收你的点击",true);return;}
+  if(!S.takeover){say("Select “Take control” first; clicks are accepted only after takeover",true);return;}
   var p=logicalPoint(ev.clientX,ev.clientY);
-  if(!p){say("拿不到视口尺寸，先点一次「刷新帧」",true);return;}
+  if(!p){say("Viewport size unavailable; select “Refresh frame” first",true);return;}
   var wrap=$("viewportWrap").getBoundingClientRect();
   $("ping").style.left=(ev.clientX-wrap.left)+"px";
   $("ping").style.top=(ev.clientY-wrap.top)+"px";
   $("ping").className=""; void $("ping").offsetWidth; $("ping").className="go";
   try{
     await call("browser_app_click",args({x:Math.round(p.x),y:Math.round(p.y)}));
-    say("点了 ("+Math.round(p.x)+", "+Math.round(p.y)+")");
+    say("Clicked ("+Math.round(p.x)+", "+Math.round(p.y)+")");
     setTimeout(refresh,1500);
   }catch(e){say(String(e&&e.message||e),true)}
 });
 
 $("takeover").addEventListener("click",async function(){
   var want=!S.takeover;
-  say(want?"正在接管…远程 worker 慢，可能要等十几秒":"正在交还…");
+  say(want?"Taking control… The remote worker may take several seconds":"Returning control…");
   try{
     var d=await call("browser_app_takeover",args({takeover:want}));
     applyState(d); startPoll();
-    say(S.takeover?"接管了，画面归你 — 直接点":"还给模型了");
+    say(S.takeover?"You have control — click the view":"Control returned to model");
   }catch(e){
-    // 超时不等于没生效：worker 常常是动作做了、回执晚到。补查真实状态。
-    say(String(e&&e.message||e)+" — 正在补查真实状态…",true);
+    // A timeout does not prove failure: the worker may finish before its receipt arrives. Recheck real state.
+    say(String(e&&e.message||e)+" — checking actual state…",true);
     setTimeout(function(){refresh().then(function(){
-      if(S.takeover===want)say(want?"其实接管成功了，画面归你 — 直接点":"其实已经交还了");
+      if(S.takeover===want)say(want?"Takeover succeeded — click the view":"Control was returned");
     })},3000);
   }
 });
@@ -272,13 +273,13 @@ async function navigate(){
 }
 ["Enter","Escape"].forEach(function(k){
   $("key-"+k).addEventListener("click",async function(){
-    if(!S.takeover){say("先点「我来操作」",true);return;}
+    if(!S.takeover){say("Select “Take control” first",true);return;}
     try{ await call("browser_app_key",args({key:k})); setTimeout(refresh,300); }
     catch(e){say(String(e&&e.message||e),true)}
   });
 });
 $("send").addEventListener("click",async function(){
-  if(!S.takeover){say("先点「我来操作」",true);return;}
+  if(!S.takeover){say("Select “Take control” first",true);return;}
   var t=$("humanText").value;
   if(!t)return;
   try{ await call("browser_app_type",args({text:t})); $("humanText").value=""; setTimeout(refresh,300); }
@@ -333,10 +334,10 @@ if(app){
     await refresh();
   }catch(e){
     stage("connect","fail",String(e&&e.message||e));
-    $("empty").textContent="桥没连上 — 展开下面的 STAGES 看卡在哪一级";
+    $("empty").textContent="Bridge not connected — expand STAGES below to diagnose";
     say(String(e&&e.message||e),true);
   }
 }else{
-  $("empty").textContent="MCP App SDK 没加载 — 展开 STAGES";
+  $("empty").textContent="MCP App SDK did not load — expand STAGES";
 }
 </script></body></html>`;

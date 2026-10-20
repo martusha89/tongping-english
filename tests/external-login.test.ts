@@ -33,8 +33,8 @@ test("v50 manual local login handoff is explicit and worker-gated", async () => 
   assert.match(server, /browser_app_external_login_start/);
   assert.match(server, /browser_app_external_login_finish/);
   assert.match(app, /id="localLogin"/);
-  assert.match(app, /登录好了，接回/);
-  assert.match(app, /本机登录需要 Windows Worker v28\+/);
+  assert.match(app, /Signed in — reconnect/);
+  assert.match(app, /Local sign-in requires Windows Worker v28\+\./);
 
   const finishStart = server.indexOf('"browser_app_external_login_finish"');
   const finishEnd = server.indexOf('"browser_app_click"', finishStart);

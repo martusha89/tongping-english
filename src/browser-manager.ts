@@ -995,7 +995,7 @@ export class BrowserManager {
               chosen.visibleSubtitle,
             )
         : [];
-    // A DOM "subtitle" that never changes is a label (e.g. "合集 · 更新至第11集"),
+    // A DOM "subtitle" that never changes is a label (for example, a collection/update badge),
     // not dialogue: require at least two different lines.
     const visibleDomDistinct = new Set(visibleDomHistory.map((cue) => cue.text)).size;
     const visibleDomCues =

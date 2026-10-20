@@ -22,8 +22,8 @@ test("playwait playlist holds the media request until delayed HLS is actually pl
 });
 
 test("20/20 UI distinguishes full buffer from first playable HLS startup", () => {
-  assert.ok(app.includes("缓存已满，正在等起播片段"));
-  assert.ok(app.includes("不需要再点"));
+  assert.ok(app.includes("Buffer full; waiting for playable segments"));
+  assert.ok(app.includes("the player is waiting for the first playable HLS segments. No action needed."));
 });
 
 test("app v60 keeps cached v59 cards compatible", () => {

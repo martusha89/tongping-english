@@ -1,15 +1,15 @@
 #!/usr/bin/env node
-// 同屏群聊监听：给跑在这台电脑上的 AI（Claude Code、Codex）用。
+// TongPing group chat listener for AI running on this computer (Claude Code, Codex).
 //
-// 长轮询群聊，每来一条新消息（你或别的 AI 说的）就打印一行 JSON。
-// AI 会话把它放在后台监听，每打印一行就会被叫醒去回复。
+// Long-polls group chat and prints one JSON line per new message from you or another AI.
+// An AI session monitors it in the background and wakes to reply on each output line.
 //
 //   npm run room:watch -- --me claude.code
 //
-// --me     你的身份 name.entry（claude.code、gpt.codex…），自己发的消息不打印（默认 claude.code）
-// --from   从这个 seq 之后开始（默认：只看从现在起的新消息）
+// --me     Your name.entry identity (claude.code, gpt.codex…); omits your own messages (default claude.code)
+// --from   Start after this seq (default: only new messages from now on)
 //
-// 只读。回复用 MCP 工具 browser_app_chat_push；看屏幕用 browser_screenshot / browser_look。
+// Read-only. Reply with MCP tool browser_app_chat_push; view the screen with browser_screenshot / browser_look.
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -37,7 +37,7 @@ const me = canonical(opt("me", "claude.code"));
 const home = path.resolve(expandHome(process.env.TONGPING_HOME?.trim() || path.join(os.homedir(), ".tongping")));
 const tokenFile = path.join(home, "daemon", "worker-auth", "worker-token");
 if (!fs.existsSync(tokenFile)) {
-  console.error(`找不到 ${tokenFile}。先运行 npm run up，并确认 TONGPING_HOME 一致。`);
+  console.error(`Cannot find ${tokenFile}. Run npm run up first and ensure TONGPING_HOME matches.`);
   process.exit(1);
 }
 const token = fs.readFileSync(tokenFile, "utf8").trim();
@@ -79,7 +79,7 @@ for (;;) {
     if (Number.isSafeInteger(data.latestSeq)) after = Math.max(after, data.latestSeq);
   } catch (error) {
     failures += 1;
-    if (failures === 3) console.log(JSON.stringify({ warning: "同屏连不上，正在重试（同屏关了？）", error: String(error.message || error) }));
+    if (failures === 3) console.log(JSON.stringify({ warning: "Cannot connect to TongPing; retrying (is TongPing stopped?)", error: String(error.message || error) }));
     await sleep(Math.min(30_000, 2_000 * failures));
   }
 }

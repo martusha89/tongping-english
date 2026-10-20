@@ -755,7 +755,7 @@ function mod(value: number, divisor: number): number {
   return ((value % divisor) + divisor) % divisor;
 }
 
-/** A decoded mono/stereo PCM16 window cut from the buffered 陪看 audio. */
+/** A decoded mono/stereo PCM16 window cut from the buffered Watch Together audio. */
 export interface AudioPcmWindow {
   buffer: Buffer;
   sampleRate: number;

@@ -205,7 +205,7 @@ export class TongpingOAuthService {
         .filter((at) => at > currentMs - PASSWORD_FAILURE_WINDOW_MS);
       if (recent.length >= PASSWORD_FAILURE_LIMIT) {
         response.setHeader("retry-after", String(Math.max(1, Math.ceil((recent[0]! + PASSWORD_FAILURE_WINDOW_MS - currentMs) / 1000))));
-        sendHtml(response, 429, loginPage(params, "尝试次数过多，请稍后再试"));
+        sendHtml(response, 429, loginPage(params, "Too many attempts. Please try again later."));
         return true;
       }
       if (!safeEqual(supplied, this.password)) {
@@ -214,7 +214,7 @@ export class TongpingOAuthService {
         sendHtml(
           response,
           401,
-          loginPage(params, "密码不对，再试一次"),
+          loginPage(params, "Incorrect password. Please try again."),
         );
         return true;
       }
@@ -526,10 +526,10 @@ function loginPage(
     ? `<p class="err">${esc(error)}</p>`
     : "";
   return `<!doctype html>
-<html lang="zh-CN"><head>
+<html lang="en"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>同屏 · 连接授权</title>
+<title>TongPing · Connection Authorization</title>
 <style>
 :root{color-scheme:light dark;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 body{margin:0;min-height:100vh;display:grid;place-items:center;background:#151316;color:#f4f1f3}
@@ -540,11 +540,11 @@ button{width:100%;margin-top:12px;padding:12px;border:0;border-radius:11px;backg
 .err{color:#ff9c9c}
 </style></head><body>
 <form method="post">
-<h2>同屏</h2>
-<p>共享浏览器连接授权。输入你在 .env 里设置的 TONGPING_OAUTH_PASSWORD。</p>
+<h2>TongPing</h2>
+<p>Authorize the shared browser connection. Enter the TONGPING_OAUTH_PASSWORD set in your .env file.</p>
 ${err}${hidden}
-<input type="password" name="_pw" placeholder="授权密码" autocomplete="current-password" autofocus required>
-<button type="submit">授权连接</button>
+<input type="password" name="_pw" placeholder="Authorization password" autocomplete="current-password" autofocus required>
+<button type="submit">Authorize connection</button>
 </form></body></html>`;
 }
 

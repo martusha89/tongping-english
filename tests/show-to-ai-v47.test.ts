@@ -10,8 +10,8 @@ const app = fs.readFileSync(
 test("show-to-ai button is visible in the mode bar", () => {
   for (const token of [
     'id="showToAi"',
-    'id="showToAiLabel">叫大家看',
-    '把你现在看到的这一帧分享给群里的 AI 看',
+    'id="showToAiLabel">Show Everyone',
+    'Share the frame you see with the AIs in the group',
     'shared-browser-v93',
   ]) {
     assert.ok(app.includes(token), token);
@@ -55,9 +55,9 @@ test("explicit visual check parks the frame and sends a short system trigger", (
   for (const token of [
     'USER_EXPLICIT_VISUAL_CHECK',
     'captured.image.data',
-    'call the 同屏 tool browser_look',
-    '"【同屏 · 系统】" + userZhName() + " 按了「叫大家看」',
-    'browser_app_chat_push 把回应推进群聊，再在自己的聊天里回应',
+    'call the TongPing tool browser_look',
+    '"[TongPing · System] " + userZhName() + " pressed “Show Everyone”',
+    'browser_app_chat_push to post your response into the group chat before repeating it in your own chat',
     'chatRelayInstruction()',
   ]) {
     assert.ok(app.includes(token), token);

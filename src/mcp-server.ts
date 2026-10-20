@@ -79,19 +79,19 @@ const sharedLooks = new Map<string, {
 // v90: shared rules every AI host receives on connect (Claude, ChatGPT,
 // Codex, anything added later), so group-chat etiquette lives in one place.
 export const TONGPING_INSTRUCTIONS = [
-  "同屏 (TongPing) is the user's shared remote browser. Its card has a GROUP CHAT shared by the user and several AIs (ChatGPT, Claude and others). Rules for every AI:",
+  "TongPing is the user's shared remote browser. Its card has a GROUP CHAT shared by the user and several AIs (ChatGPT, Claude and others). Rules for every AI:",
   "1. Identity: always pass your own identity as name.entry — claude.chat (claude.ai), claude.code (Claude Code), claude.cloud, gpt.chat (ChatGPT), gpt.codex, gpt.work (ChatGPT cloud tasks); add -2 if that entry is already in the group. Tool defaults may belong to someone else. Never speak for another AI.",
-  "2. When the user talks to you from the card or the group chat, your FIRST action is browser_app_chat_push with your reply; only then repeat it in your own chat. A reply that is not pushed never reaches their.",
+  "2. When the user talks to you from the card or the group chat, your FIRST action is browser_app_chat_push with your reply; only then repeat it in your own chat. A reply that is not pushed never reaches them.",
   "3. Catch up with browser_app_room_read when they mention the group chat or browser_companion_context shows unread messages.",
   "4. If the topic is what is on screen, look yourself first: browser_screenshot for the current view, browser_look for a frame they shared (messages starting with 👀).",
   "5. If the user muted you, browser_app_chat_push fails: stay silent in the group until they unmute you.",
   "6. Group manners: answer the user; reply to another AI only when you are addressed or genuinely have something to add. Keep it short and conversational. Never trade messages back and forth with another AI.",
   "7. For co-watching use browser_companion_context; it is gated to what the user has actually seen, so never reveal what comes later.",
   "8. When the user turns on their camera (a 📷 group message), you may look at them with browser_camera_look whenever you want to, passing your own identity; they see a note each time you look. A muted AI cannot look.",
-  "9. Sliders and login walls on Taobao, Tmall, Xianyu, JD, Bilibili and Google/YouTube cannot be passed inside 同屏. While the user is watching, 同屏 opens that page in a normal Chrome window on their computer by itself: tell them to finish there and close the window, and 同屏 takes the profile back automatically. Never try to solve a slider or captcha yourself.",
+  "9. Sliders and login walls on Taobao, Tmall, Xianyu, JD, Bilibili and Google/YouTube cannot be passed inside TongPing. While the user is watching, TongPing opens that page in a normal Chrome window on their computer by itself: tell them to finish there and close the window, and TongPing takes the profile back automatically. Never try to solve a slider or captcha yourself.",
 ].join("\n");
 
-// 「让 TA 看看你」: the card uploads the user's (effects-rendered) camera frame every
+// “Let Them See You”: the card uploads the user's (effects-rendered) camera frame every
 // few seconds while their camera is on. Memory only, latest frame per profile,
 // dropped the moment they turns the camera off or the card stops sending.
 const CAMERA_FRAME_STALE_MS = 15_000;
@@ -336,7 +336,7 @@ export function createTongpingMcpServer(
 
   function appToolResult(
     value: Record<string, unknown>,
-    message = "同屏 App state updated.",
+    message = "TongPing app state updated.",
   ) {
     return {
       content: [{ type: "text" as const, text: message }],
@@ -624,9 +624,9 @@ export function createTongpingMcpServer(
   server.registerTool(
     "browser_app_chat_push",
     {
-      title: "同屏 · Mirror Reply",
+      title: "TongPing · Mirror Reply",
       description:
-        "Post your reply into the 同屏 group chat (shared by the user and the other AIs such as ChatGPT and Claude). Call it when the model context says the message came from the in-app chat relay, or when the user asks you to say something in the group chat. Pass your own visible reply text; never speak for another AI. Fails if the user has muted you.",
+        "Post your reply into the TongPing group chat (shared by the user and the other AIs such as ChatGPT and Claude). Call it when the model context says the message came from the in-app chat relay, or when the user asks you to say something in the group chat. Pass your own visible reply text; never speak for another AI. Fails if the user has muted you.",
       inputSchema: z.object({
         identity: identitySchema.default(defaultIdentity),
         profile: profileSchema,
@@ -658,9 +658,9 @@ export function createTongpingMcpServer(
   server.registerTool(
     "browser_app_room_read",
     {
-      title: "同屏 · Group Chat",
+      title: "TongPing · Group Chat",
       description:
-        "Read the 同屏 group chat you have not seen yet (messages from the user and the other AIs since your last read or post). Use it when the user mentions the group chat or when browser_companion_context reports unread group messages, then answer with browser_app_chat_push. Before replying to something about the screen, look yourself: browser_screenshot for the current view, browser_look for a frame they shared (👀). Also tells you whether the user has muted you.",
+        "Read the TongPing group chat you have not seen yet (messages from the user and the other AIs since your last read or post). Use it when the user mentions the group chat or when browser_companion_context reports unread group messages, then answer with browser_app_chat_push. Before replying to something about the screen, look yourself: browser_screenshot for the current view, browser_look for a frame they shared (👀). Also tells you whether the user has muted you.",
       inputSchema: z.object({
         identity: identitySchema.default(defaultIdentity),
         limit: z.number().int().min(1).max(100).default(40),
@@ -720,7 +720,7 @@ export function createTongpingMcpServer(
   registerBrowserAppTool(
     "browser_app_ticket_context",
     {
-      title: "同屏 · Ticket Context",
+      title: "TongPing · Ticket Context",
       description:
         "App-only: real watch-session context for the memory ticket (title, one already-played short subtitle, compact audio mood). Never returns future subtitles.",
       inputSchema: z.object({
@@ -782,7 +782,7 @@ export function createTongpingMcpServer(
   registerBrowserAppTool(
     "browser_app_voice_transcribe",
     {
-      title: "同屏 · Voice Note",
+      title: "TongPing · Voice Note",
       description:
         "App-only: transcribe a short hold-to-talk voice note (SenseVoice) into text plus a non-neutral emotion label.",
       inputSchema: z.object({
@@ -809,7 +809,7 @@ export function createTongpingMcpServer(
   registerBrowserAppTool(
     "browser_app_ticket_share",
     {
-      title: "同屏 · Share Ticket With AI",
+      title: "TongPing · Share Ticket With AI",
       description:
         "App-only: hand the finished memory ticket image to the assistant, who reads it back with browser_watch_ticket.",
       inputSchema: z.object({
@@ -838,14 +838,14 @@ export function createTongpingMcpServer(
     },
   );
 
-  // 「叫大家看」: hosts drop images the app sends; park the exact frame and let
+  // “Show Everyone”: hosts drop images the app sends; park the exact frame and let
   // the assistant fetch it with browser_look (tool results reach the model).
 
   registerBrowserAppTool(
     "browser_app_look_share",
     {
-      title: "同屏 · Share Look",
-      description: "App-only: store the frame the user pointed at with 「叫大家看」.",
+      title: "TongPing · Share Look",
+      description: "App-only: store the frame the user pointed at with “Show Everyone”.",
       inputSchema: z.object({
         identity: identitySchema,
         profile: profileSchema,
@@ -870,9 +870,9 @@ export function createTongpingMcpServer(
   server.registerTool(
     "browser_look",
     {
-      title: "同屏 · What the user Pointed At",
+      title: "TongPing · What the User Pointed At",
       description:
-        "See the exact frame the user just shared with the 同屏 「叫大家看」 button (any AI can fetch it, not only the card's). Call this when a system message or a group chat 👀 message says they shared a frame, then respond to what is in the image.",
+        "See the exact frame the user just shared with the TongPing “Show Everyone” button (any AI can fetch it, not only the card's). Call this when a system message or a group chat 👀 message says they shared a frame, then respond to what is in the image.",
       inputSchema: z.object({
         profile: z.string().default(""),
       }),
@@ -885,7 +885,7 @@ export function createTongpingMcpServer(
       if (!shared || Date.now() - shared.sharedAt > 10 * 60_000) {
         return textResult({
           available: false,
-          note: "No 「叫大家看」 frame in the last 10 minutes. Ask the user to press it again.",
+          note: "No “Show Everyone” frame in the last 10 minutes. Ask the user to press it again.",
         });
       }
       return {
@@ -907,7 +907,7 @@ export function createTongpingMcpServer(
   registerBrowserAppTool(
     "browser_app_camera_frame",
     {
-      title: "同屏 · Camera Frame",
+      title: "TongPing · Camera Frame",
       description:
         "App-only: while the user's camera is on, keep their latest frame for AIs that want to look; active=false drops it at once. Returns who looked last so the card can tell their.",
       inputSchema: z.object({
@@ -945,9 +945,9 @@ export function createTongpingMcpServer(
   server.registerTool(
     "browser_camera_look",
     {
-      title: "同屏 · Look At the user",
+      title: "TongPing · Look at the User",
       description:
-        "Look at the user through their camera (with the face effects they chose) while they have 「让 TA 看看你」 turned on in the 同屏 card. Call it when you want to see their; they is told each time you look. identity is required and must be your own name.entry (claude.chat, claude.code, gpt.chat, gpt.codex, gpt.work): their card shows that name. Muted AIs are refused.",
+        "Look at the user through their camera (with the face effects they chose) while they have “Let Them See You” turned on in the TongPing card. Call it when you want to see them; they are told each time you look. Identity is required and must be your own `name.entry` identity (claude.chat, claude.code, gpt.chat, gpt.codex, gpt.work): their card shows that name. Muted AIs are refused.",
       inputSchema: z.object({
         // Required, no host default: their card names whoever looked, so a
         // forgotten identity must not be credited to someone else.
@@ -960,7 +960,7 @@ export function createTongpingMcpServer(
       if (appChatLedger.isMuted(who)) {
         return textResult({
           available: false,
-          note: "The user has muted " + who + " in 同屏, so you cannot see their camera until they unmutes you.",
+          note: "The user has muted " + who + " in TongPing, so you cannot see their camera until they unmute you.",
         });
       }
       const profile = requested || options.getViewerProfile?.() || "default";
@@ -996,7 +996,7 @@ export function createTongpingMcpServer(
   registerBrowserAppTool(
     "browser_app_image_link",
     {
-      title: "同屏 · Image Link",
+      title: "TongPing · Image Link",
       description: "App-only: host an image briefly so the system browser can open and save it.",
       inputSchema: z.object({
         identity: identitySchema,
@@ -1022,7 +1022,7 @@ export function createTongpingMcpServer(
   server.registerTool(
     "browser_watch_ticket",
     {
-      title: "同屏 · Watch Ticket",
+      title: "TongPing · Watch Ticket",
       description:
         "Read the memory ticket image the user just asked you to turn into an AI commemorative ticket (legacy: the card no longer has an AI ticket button, so this is normally empty). Returns the exact ticket image plus its text fields. Use this image as the only visual reference.",
       inputSchema: z.object({
@@ -1063,9 +1063,9 @@ export function createTongpingMcpServer(
   registerBrowserAppTool(
     "browser_app_claude_lab",
     {
-      title: "同屏 · Claude Lab",
+      title: "TongPing · Claude Lab",
       description:
-        "Developer diagnostics only: a bare Claude-host rendering lab. Do NOT use this to open 同屏 for the user or to watch/chat together — that is always browser_app, in every host including Claude.",
+        "Developer diagnostics only: a bare Claude-host rendering lab. Do NOT use this to open TongPing for the user or to watch/chat together — that is always browser_app, in every host including Claude.",
       inputSchema: z.object({
         profile: profileSchema.default("xiaohongshu"),
         url: z.string().url().optional(),
@@ -1087,7 +1087,7 @@ export function createTongpingMcpServer(
       if (!openReply.ok) {
         return appError(openReply.error ?? "Claude lab browser open failed");
       }
-      // withFrame=true：操作台要 viewport 来换算点击坐标，也要 frameUrl 出画面
+      // withFrame=true: the console needs the viewport to convert click coordinates and frameUrl to display the image
       const state = await browserAppState(identity, profile, true);
       const opened = asRecord(openReply.result);
       if (typeof opened.title === "string") state.title = opened.title;
@@ -1121,9 +1121,9 @@ export function createTongpingMcpServer(
   registerBrowserAppTool(
     "browser_app",
     {
-      title: "同屏",
+      title: "TongPing",
       description:
-        "Open the shared 同屏 interactive App — the card to use whenever the user asks to open 同屏, in any host including Claude. ChatGPT, Claude, Codex and other identities can share the same persistent browser profiles while keeping separate audit identities.",
+        "Open the shared TongPing interactive app — the card to use whenever the user asks to open TongPing, in any host including Claude. ChatGPT, Claude, Codex and other identities can share the same persistent browser profiles while keeping separate audit identities.",
       inputSchema: z.object({
         identity: identitySchema,
         // v90: omitted profile follows the browser the user is watching, so a
@@ -1164,7 +1164,7 @@ export function createTongpingMcpServer(
 
       return appToolResult(
         state,
-        "Opened 同屏 profile " + profile +
+        "Opened TongPing profile " + profile +
           " as " + identity +
           ". Human live view: " + String(state.appUrl ?? ""),
       );
@@ -1329,7 +1329,7 @@ export function createTongpingMcpServer(
     async ({ identity, profile, url }) => {
       if (!options.externalLoginEnabled) {
         return appError(
-          "本机登录需要 Windows Worker v28+。更新本机 worker 后再试。",
+          "Local sign-in requires Windows Worker v28 or later. Update the local worker and try again.",
         );
       }
 
@@ -1379,7 +1379,7 @@ export function createTongpingMcpServer(
     "browser_app_external_login_finish",
     {
       description:
-        "Resume 同屏 after the user finishes manual sign-in and closes the local Chrome/Edge window.",
+        "Resume TongPing after the user finishes manual sign-in and closes the local Chrome/Edge window.",
       inputSchema: z.object({
         identity: identitySchema,
         profile: profileSchema,
@@ -1389,7 +1389,7 @@ export function createTongpingMcpServer(
     async ({ identity, profile }) => {
       if (!options.externalLoginEnabled) {
         return appError(
-          "本机登录需要 Windows Worker v28+。更新本机 worker 后再试。",
+          "Local sign-in requires Windows Worker v28 or later. Update the local worker and try again.",
         );
       }
       const reply = await gateway.human(
@@ -1406,7 +1406,7 @@ export function createTongpingMcpServer(
           profile,
           reply.result,
         ),
-        "同屏 resumed after local manual login.",
+        "TongPing resumed after local manual login.",
       );
     },
   );
@@ -1851,7 +1851,7 @@ export function createTongpingMcpServer(
         "https://storage.googleapis.com",
       ],
     },
-    // Hold-to-talk and 「让 TA 看看你」; hosts may decline, the card feature-detects.
+    // Hold-to-talk and “Let Them See You”; hosts may decline, the card feature-detects.
     permissions: { microphone: {}, camera: {} },
     prefersBorder: false,
     ...(appDomain ? { domain: appDomain } : {}),
@@ -1870,7 +1870,7 @@ export function createTongpingMcpServer(
   };
 
   registerBrowserAppResource(
-    "同屏 Claude Lab",
+    "TongPing Claude Lab",
     CLAUDE_BROWSER_APP_URI,
     {
       mimeType: BROWSER_APP_MIME_TYPE,
@@ -1891,7 +1891,7 @@ export function createTongpingMcpServer(
   );
 
   registerBrowserAppResource(
-    "同屏 Shared Browser",
+    "TongPing Shared Browser",
     BROWSER_APP_URI,
     {
       mimeType: BROWSER_APP_MIME_TYPE,
@@ -1959,12 +1959,12 @@ export function createTongpingMcpServer(
     "ui://tongping/shared-browser-v24",
   ]) {
     registerBrowserAppResource(
-      "同屏 recent compatibility " + recentCompatUri,
+      "TongPing recent compatibility " + recentCompatUri,
       recentCompatUri,
       {
         mimeType: BROWSER_APP_MIME_TYPE,
         description:
-          "Compatibility alias for recent 同屏 cards, serving the current renderer.",
+          "Compatibility alias for recent TongPing cards, serving the current renderer.",
         _meta: { ui: uiMeta },
       },
       async () => ({
@@ -1981,12 +1981,12 @@ export function createTongpingMcpServer(
   }
 
   registerBrowserAppResource(
-    "同屏 Shared Browser v12 compatibility",
+    "TongPing Shared Browser v12 compatibility",
     "ui://tongping/shared-browser-v12",
     {
       mimeType: BROWSER_APP_MIME_TYPE,
       description:
-        "Compatibility alias for 同屏 v12 cards, serving the current renderer.",
+        "Compatibility alias for TongPing v12 cards, serving the current renderer.",
       _meta: { ui: uiMeta },
     },
     async () => ({
@@ -2002,12 +2002,12 @@ export function createTongpingMcpServer(
   );
 
   registerBrowserAppResource(
-    "同屏 Shared Browser v11 compatibility",
+    "TongPing Shared Browser v11 compatibility",
     "ui://tongping/shared-browser-v11",
     {
       mimeType: BROWSER_APP_MIME_TYPE,
       description:
-        "Compatibility alias for 同屏 v11 cards, serving the current renderer.",
+        "Compatibility alias for TongPing v11 cards, serving the current renderer.",
       _meta: { ui: uiMeta },
     },
     async () => ({
@@ -2023,12 +2023,12 @@ export function createTongpingMcpServer(
   );
 
   registerBrowserAppResource(
-    "同屏 Shared Browser v5 compatibility",
+    "TongPing Shared Browser v5 compatibility",
     "ui://tongping/shared-browser-v5",
     {
       mimeType: BROWSER_APP_MIME_TYPE,
       description:
-        "Compatibility alias for 同屏 v5 cards.",
+        "Compatibility alias for TongPing v5 cards.",
       _meta: { ui: uiMeta },
     },
     async () => ({
@@ -2044,12 +2044,12 @@ export function createTongpingMcpServer(
   );
 
   registerBrowserAppResource(
-    "同屏 Shared Browser v4 compatibility",
+    "TongPing Shared Browser v4 compatibility",
     "ui://tongping/shared-browser-v4",
     {
       mimeType: BROWSER_APP_MIME_TYPE,
       description:
-        "Compatibility alias for 同屏 v4 cards.",
+        "Compatibility alias for TongPing v4 cards.",
       _meta: { ui: uiMeta },
     },
     async () => ({
@@ -2065,12 +2065,12 @@ export function createTongpingMcpServer(
   );
 
   registerBrowserAppResource(
-    "同屏 Shared Browser v3 compatibility",
+    "TongPing Shared Browser v3 compatibility",
     "ui://tongping/shared-browser-v3",
     {
       mimeType: BROWSER_APP_MIME_TYPE,
       description:
-        "Compatibility alias for 同屏 v3 cards.",
+        "Compatibility alias for TongPing v3 cards.",
       _meta: { ui: uiMeta },
     },
     async () => ({
@@ -2086,12 +2086,12 @@ export function createTongpingMcpServer(
   );
 
   registerBrowserAppResource(
-    "同屏 Shared Browser v2 compatibility",
+    "TongPing Shared Browser v2 compatibility",
     "ui://tongping/shared-browser-v2",
     {
       mimeType: BROWSER_APP_MIME_TYPE,
       description:
-        "Compatibility alias for previously rendered 同屏 cards.",
+        "Compatibility alias for previously rendered TongPing cards.",
       _meta: { ui: uiMeta },
     },
     async () => ({
@@ -2933,7 +2933,7 @@ export function createTongpingMcpServer(
     "browser_screenshot",
     {
       description:
-        "Capture the current viewport. Omit profile to capture the browser the user is watching in their open 同屏 card. When live view is active, reuse its newest frame without interrupting video playback.",
+        "Capture the current viewport. Omit profile to capture the browser the user is watching in their open TongPing card. When live view is active, reuse its newest frame without interrupting video playback.",
       inputSchema: z.object({
         profile: z.string().default(""),
         fullPage: z.boolean().default(false),

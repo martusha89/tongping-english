@@ -334,7 +334,7 @@ export const HOSTED_TOOLS: Readonly<Record<HostedToolName, HostedToolDefinition>
     "browser.read",
     45_000,
     2_306_867,
-    "Capture a screenshot of the computer's browser right now (ahead of a delayed 陪看 view). The picture comes back as an image item after the JSON text (in ChatGPT: content_items, the item with type image); look at that image itself before you answer, do not stop at the text.",
+    "Capture a screenshot of the computer's browser right now (ahead of a delayed Watch Together view). The picture comes back as an image item after the JSON text (in ChatGPT: content_items, the item with type image); look at that image itself before you answer, do not stop at the text.",
     actionSchema({
       fullPage: { type: "boolean", enum: [false] },
     }),

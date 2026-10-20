@@ -56,7 +56,7 @@ let onStatus=()=>{};const report=s=>{try{onStatus(s);}catch(_){}};
 
 const api = `
 // ----- card API -----
-// Every look except 原图 sits on the 美颜 base (smoothing + light makeup).
+// Every look except Original sits on the Beauty base (smoothing + light makeup).
 const LOOKS={
  none:{mode:'none',beauty:false,decor:true,makeup:false,stickers:[]},
  soft:{mode:'none',beauty:true,decor:true,makeup:true,stickers:[]},
@@ -77,24 +77,24 @@ async function tick(t){
  lastTick=t;lastTime=video.currentTime;
  try{
   if(!drawPlain()){raf=requestAnimationFrame(tick);return;}
-  let lm=null;if(engine&&effectsReady){try{lm=await engine.detect(frame,t);}catch(e){effectsReady=false;report('特效暂停：'+e.message+' · 先用原图');}}
+  let lm=null;if(engine&&effectsReady){try{lm=await engine.detect(frame,t);}catch(e){effectsReady=false;report('Effects paused: '+e.message+' · using original view for now');}}
   if(gen!==generation||!running)return;
   const q=lm?quality(lm,t):0;tracked=!!lm;
   renderer.draw(frame,q>0?lm:null,mode,intensity*q,beauty&&q>.35,facing==='user',decor);
- }catch(e){if(gen===generation)report('画面出错：'+e.message);}
+ }catch(e){if(gen===generation)report('Video error: '+e.message);}
  if(gen===generation&&running)raf=requestAnimationFrame(tick);
 }
 function close(){generation++;running=false;cancelAnimationFrame(raf);if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;if(video)video.srcObject=null;lastTime=-1;lastMetrics=null;tracked=false;}
 async function open(opts){
  close();const gen=generation;video=opts.video;canvas=opts.canvas;onStatus=opts.onStatus||(()=>{});
- if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw Object.assign(Error('这里用不了摄像头'),{name:'NotSupportedError'});
+ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw Object.assign(Error('Camera is unavailable here'),{name:'NotSupportedError'});
  const incoming=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:facing},width:{ideal:640},height:{ideal:854},frameRate:{ideal:24,max:30}}});
  if(gen!==generation){incoming.getTracks().forEach(t=>t.stop());return false;}
  stream=incoming;video.srcObject=stream;video.muted=true;video.playsInline=true;await video.play();
  if(!renderer||renderer.canvas!==canvas)renderer=new SceneRenderer(canvas);
  running=true;raf=requestAnimationFrame(tick);
- report('摄像头开着 · 正在加载特效…');
- loadEngine().then(()=>{if(gen!==generation)return;effectsReady=true;report('');}).catch(e=>{if(gen!==generation)return;effectsReady=false;report('特效没加载出来，先用原图（'+e.message+'）');});
+ report('Camera on · loading effects…');
+ loadEngine().then(()=>{if(gen!==generation)return;effectsReady=true;report('');}).catch(e=>{if(gen!==generation)return;effectsReady=false;report('Effects failed to load; using original view for now ('+e.message+')');});
  return true;
 }
 async function flip(){facing=facing==='user'?'environment':'user';if(stream&&video&&canvas)return open({video,canvas,onStatus});}

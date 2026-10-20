@@ -14,12 +14,12 @@ export const VOICE_NOTE_MAX_BYTES = 1_500_000;
 
 // Neutral speech carries no emoji, so it simply yields no label.
 const EMOTIONS: Record<string, string> = {
-  "😊": "开心",
-  "😔": "低落",
-  "😡": "生气",
-  "😰": "紧张",
-  "🤢": "嫌弃",
-  "😮": "惊讶",
+  "😊": "happy",
+  "😔": "sad",
+  "😡": "angry",
+  "😰": "nervous",
+  "🤢": "disgusted",
+  "😮": "surprised",
 };
 // Audio events (laughter, music…) mostly come from the show playing in the
 // background, not from them, so they are dropped rather than labelled.
@@ -106,9 +106,9 @@ export async function transcribeVoiceNote(
   mimeType: string,
 ): Promise<VoiceNoteResult> {
   const key = siliconFlowKey();
-  if (!key) throw new Error("语音识别没有配置密钥");
-  if (bytes.length === 0) throw new Error("没有录到声音");
-  if (bytes.length > VOICE_NOTE_MAX_BYTES) throw new Error("这段语音太长了");
+  if (!key) throw new Error("No speech recognition key is configured");
+  if (bytes.length === 0) throw new Error("No audio was recorded");
+  if (bytes.length > VOICE_NOTE_MAX_BYTES) throw new Error("This voice recording is too long");
 
   const type = mimeType || "application/octet-stream";
   const first = await postToSenseVoice(key, bytes, "voice" + extensionFor(type), type);
@@ -123,10 +123,10 @@ export async function transcribeVoiceNote(
     await toMp3(input, output);
     const second = await postToSenseVoice(key, await readFile(output), "voice.mp3", "audio/mpeg");
     if (second.ok) return decodeSenseVoiceText(second.text);
-    throw new Error("语音识别失败 " + second.status + ": " + second.text);
+    throw new Error("Speech recognition failed " + second.status + ": " + second.text);
   } catch (error) {
-    if (error instanceof Error && error.message.startsWith("语音识别失败")) throw error;
-    throw new Error("语音识别失败 " + first.status + ": " + first.text);
+    if (error instanceof Error && error.message.startsWith("Speech recognition failed")) throw error;
+    throw new Error("Speech recognition failed " + first.status + ": " + first.text);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }

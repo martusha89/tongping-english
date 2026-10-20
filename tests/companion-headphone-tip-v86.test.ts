@@ -7,5 +7,5 @@ import fs from "node:fs";
 test("the waiting screen no longer suggests host voice mode", () => {
   const app = fs.readFileSync(new URL("../src/browser-app.ts", import.meta.url), "utf8");
   assert.doesNotMatch(app, /id="companionTip"/);
-  assert.doesNotMatch(app, /戴上耳机效果更好/);
+  assert.doesNotMatch(app, /Headphones work better/);
 });

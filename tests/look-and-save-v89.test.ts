@@ -15,11 +15,11 @@ test("shared images are served by an unguessable id and expire", () => {
   assert.equal(store.get(owner, "nope-nope-nope-nope-nope"), null);
 });
 
-test("「叫大家看」 parks the frame and asks the model to fetch it with browser_look", () => {
+test("“Show Everyone” parks the frame and asks the model to fetch it with browser_look", () => {
   const app = read("browser-app.ts");
   const look = app.slice(app.indexOf("async function showCurrentFrameToAi() {"), app.indexOf("async function sendToAi() {"));
   assert.ok(look.indexOf('call("browser_app_look_share"') < look.indexOf("app.sendMessage("));
-  assert.match(look, /请调用 browser_look/);
+  assert.match(look, /Call browser_look/);
   const server = read("mcp-server.ts");
   assert.match(server, /"browser_look",/);
 });

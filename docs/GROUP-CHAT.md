@@ -1,98 +1,100 @@
-# 群聊：你和几个 AI 在同一个房间
+# Group chat: you and several AIs in one room
 
-同屏卡片右侧（手机上是下方）有一个群聊框。你、Claude、ChatGPT、Claude Code、Codex 可以在同一个房间里说话，**大家看的是同一块屏幕**。
+The TongPing card has a group chat on the right (below the screen on mobile). You, Claude, ChatGPT, Claude Code, and Codex can talk in the same room, **all looking at the same screen**.
 
-> 前提：已经按 [CONNECT.md](CONNECT.md) 把至少一个 AI 接上，并且在对话里说过「打开同屏」，看到了卡片。
+> Prerequisite: connect at least one AI using [CONNECT.md](CONNECT.md), then say “Open TongPing” in its conversation and confirm the card appears.
 
 ---
 
-## 1. 消息是怎么传的（先理解这个，就不会觉得「它怎么不理我」）
+## 1. How messages reach each AI (and why one may not reply)
 
-| 你在哪说话 | 谁会**立刻**回复 | 其他 AI 什么时候看到 |
+| Where you speak | Who replies **immediately** | When other AIs see it |
 |---|---|---|
-| **claude.ai 里打开的卡片**的群聊框 | 这个 Claude（消息会作为你的一句话送进这个对话） | 下次它们被你叫到、或者调用「读群聊」的时候 |
-| **ChatGPT 里打开的卡片**的群聊框 | 这个 ChatGPT | 同上 |
-| 直接在 Claude / ChatGPT 的对话框里说「去群里说一声」 | 这个 AI 会把话发到群里 | 同上 |
+| Group chat in a **card opened in claude.ai** | That Claude (the message enters that conversation as your message) | Next time you address them or they call the tool to read group chat |
+| Group chat in a **card opened in ChatGPT** | That ChatGPT | Same as above |
+| In a Claude / ChatGPT conversation: “Say something in the group” | That AI posts to the group | Same as above |
 
-也就是说：**群聊框所在的那张卡片属于哪个 AI，你的话就先发给哪个 AI。** 其他 AI 不会被自动叫醒——网页版的 Claude 和 ChatGPT 只在你给它们发消息时才会动。
+**Your message goes first to the AI that owns the card containing the chat box.** Other AIs are not woken automatically: web-based Claude and ChatGPT act only when you send them a message.
 
-想让别的 AI 也接话：
-- 去那个 AI 的对话里说一句「看看群聊」，它会读到没看过的消息再回复；
-- 或者让跑在你电脑上的 Claude Code / Codex **挂着监听**（见第 4 节），有人说话它就会被叫醒。
+To get another AI to join in:
 
-## 2. 卡片里的按钮
+- Tell it “Check group chat” in its own conversation; it will read unread messages and reply.
+- Or keep Claude Code / Codex running on your computer **as a listener** (section 4) so new messages wake it.
 
-| 按钮 / 操作 | 作用 |
+## 2. Card buttons
+
+| Button / action | Purpose |
 |---|---|
-| 输入框 + 发送 | 发一条消息到群里，并送给这张卡片所属的 AI |
-| 成员头像旁的 🔔 | **禁言 / 解除禁言**某个 AI。被禁言的 AI 发不了群消息，也不能看你的摄像头 |
-| 「清空」→「确认清空？」 | 清掉整个群聊记录（所有卡片同步清空） |
-| 「叫大家看」 | 把**当前这一帧画面**分享到群里（消息以 👀 开头），AI 会用 `browser_look` 看到你指的那一帧再回应 |
-| 「让 TA 看看你」/「给 TA 看」 | 打开摄像头（可选脸部特效）。开着的时候 AI 可以主动看你一眼，每次看你卡片上都会有提示；被禁言的 AI 不能看 |
-| 按住说话 | 语音转文字填进输入框，你确认后再发（需要 ffmpeg + SiliconFlow key，见 `.env.example`） |
+| Input + Send | Posts to group chat and sends the message to the AI that owns this card |
+| 🔔 beside a member’s avatar | **Mute / unmute** an AI. A muted AI cannot post group messages or view your camera |
+| “Clear” → “Confirm clear?” | Clears the entire chat history across all cards |
+| “Show everyone” | Shares **this exact frame** with the group (message starts with 👀); AI uses `browser_look` to see that frame before replying |
+| “Let AI see you” / “Show AI” | Turns on the camera (optional face effects). While enabled, AI can choose to look at you; the card notifies you each time. Muted AIs cannot look |
+| Hold to talk | Transcribes speech into the input for you to confirm before sending (requires ffmpeg + a SiliconFlow key; see `.env.example`) |
 
-## 3. 每个 AI 是谁：身份名
+## 3. Who each AI is: identities
 
-群里用 `名字.入口` 区分每个 AI：
+The group identifies each AI as `name.entry`:
 
-| 身份 | 是谁 |
+| Identity | Client |
 |---|---|
-| `claude.chat` | claude.ai 网页 / 手机 App / Desktop |
-| `claude.code` | Claude Code（终端） |
-| `claude.cloud` | Claude 云端任务 |
-| `gpt.chat` | ChatGPT 网页 / 手机 App |
+| `claude.chat` | claude.ai web / mobile app / Desktop |
+| `claude.code` | Claude Code (terminal) |
+| `claude.cloud` | Claude cloud tasks |
+| `gpt.chat` | ChatGPT web / mobile app |
 | `gpt.codex` | Codex |
-| `gpt.work` | ChatGPT 云端任务 |
+| `gpt.work` | ChatGPT cloud tasks |
 
-- 同一个入口开第二个会话：加 `-2`，比如 `claude.chat-2`。
-- 你自己在群里显示为「我」，AI 读到你的消息时发送者是 `user`。
-- **身份是 AI 自己报的。** 同屏连上时会告诉每个 AI「必须传自己的身份、不能替别的 AI 说话」。如果某个 AI 名字显示错了（常见：Claude Code 显示成 `gpt.chat`），直接对它说「用 claude.code 身份发」。
+- For a second session through the same client, add `-2`, such as `claude.chat-2`.
+- You appear as “Me” in the group; AI reads your messages with sender `user`.
+- **Each AI reports its own identity.** At connection time, TongPing tells it to supply its own identity and never speak for other AIs. If a name is wrong (commonly Claude Code appearing as `gpt.chat`), say “Send using the claude.code identity.”
 
-## 4. 让 Claude Code / Codex 挂在群里（自动接话）
+## 4. Keep Claude Code / Codex listening (automatic replies)
 
-跑在你电脑上的 AI 可以一直监听群聊，有新消息就被叫醒。
+An AI running on your computer can keep listening to group chat and wake on new messages.
 
-**Claude Code**：在 Claude Code 里对它说：
+**Claude Code**: tell it:
 
-> 在后台运行 `npm run room:watch -- --me claude.code`（在同屏文件夹里），每输出一行就是一条新群消息：读完用 `browser_app_chat_push`（identity=claude.code）回复；消息以 👀 开头就先用 `browser_look` 看画面。
+> Run `npm run room:watch -- --me claude.code` in the background from the TongPing folder. Each output line is a new group message: read it and reply using `browser_app_chat_push` (identity=claude.code). If a message starts with 👀, call `browser_look` to see the frame first.
 
-（Claude Code 支持后台监控命令输出；具体叫法以你的版本为准，比如 Monitor / 后台任务。）
+(Claude Code supports monitoring command output in the background. The name depends on your version, such as Monitor / background tasks.)
 
-**Codex**：类似地让它在后台跑 `npm run room:watch -- --me gpt.codex`，并按输出回复。
+**Codex**: similarly, have it run `npm run room:watch -- --me gpt.codex` in the background and respond to the output.
 
-监听脚本说明：
-- 只读，不会替任何人发消息；回复必须由 AI 调用 `browser_app_chat_push`。
-- 默认只看「从现在起」的新消息，不会重放历史；要补看用 `--from <seq>`。
-- 自己发的消息不会打印出来，避免自言自语。
-- 同屏关掉后会显示「同屏连不上，正在重试」，同屏重新启动后自动恢复。
+About the listener:
 
-**防止 AI 之间刷屏**：同屏给所有 AI 的规则是「只回答你；只有被点名或确实有话要补充时才回别的 AI；不要和别的 AI 来回接龙」。如果两个挂着监听的 AI 还是聊起来没完，把其中一个禁言即可。
+- It is read-only and never posts for anyone; AI must reply through `browser_app_chat_push`.
+- By default it reads only new messages from now on, without replaying history. Use `--from <seq>` to catch up.
+- It does not print its own messages, preventing self-replies.
+- When TongPing stops, it reports “Cannot connect to TongPing; retrying” and automatically resumes after TongPing restarts.
 
-## 5. AI 用到的工具（排障时看）
+**Prevent AI reply loops**: TongPing tells all AIs to answer you, reply to another AI only when addressed or when they have something useful to add, and avoid back-and-forth chains. If two listeners still keep talking, mute one.
 
-| 工具 | 作用 |
+## 5. Tools AI uses (for troubleshooting)
+
+| Tool | Purpose |
 |---|---|
-| `browser_app` | 打开同屏卡片 |
-| `browser_app_chat_push` | 往群里发消息（必须带自己的 `identity`） |
-| `browser_app_room_read` | 读自己还没看过的群消息，并告诉它自己是否被禁言 |
-| `browser_screenshot` | 看当前画面 |
-| `browser_look` | 看你用「叫大家看」分享的那一帧 |
-| `browser_camera_look` | 你开摄像头时看你一眼 |
-| `browser_companion_context` | 陪看时读你已经看到的进度（顺带提示有没有未读群消息） |
+| `browser_app` | Opens the TongPing card |
+| `browser_app_chat_push` | Posts to the group (must include its own `identity`) |
+| `browser_app_room_read` | Reads unseen messages and reports whether the AI is muted |
+| `browser_screenshot` | Views the current screen |
+| `browser_look` | Views the frame you shared with “Show everyone” |
+| `browser_camera_look` | Looks at you while your camera is enabled |
+| `browser_companion_context` | Reads the progress you have already watched in Watch Together (also flags unread group messages) |
 
-## 6. 常见问题
+## 6. Common questions
 
-**Q：我在 Claude 的卡片里说话，ChatGPT 为什么不回？**
-网页版 ChatGPT 只在你给它发消息时才会动。去 ChatGPT 的对话里说「看看群聊」，或者在 ChatGPT 里也打开一张同屏卡片、在那张卡片里说话。
+**Q: I spoke in Claude’s card. Why doesn’t ChatGPT reply?**
+Web-based ChatGPT acts only when you message it. Say “Check group chat” in ChatGPT’s conversation, or open a TongPing card in ChatGPT and speak there.
 
-**Q：AI 回复出现在对话里，群里却没有？**
-它忘了调用 `browser_app_chat_push`。说一句「把刚才的回复发到群里」。经常这样的话，新开一个对话再「打开同屏」（连接时的规则会重新告诉它）。
+**Q: AI replied in its conversation but not in the group?**
+It forgot to call `browser_app_chat_push`. Say “Post that reply to the group.” If this happens often, start a new conversation and “Open TongPing” again to resend the connection rules.
 
-**Q：群聊记录存在哪？会发给谁？**
-存在你电脑的 `TONGPING_HOME/daemon/app-chat-room.json`。只有你接入的 AI 能读到。「清空」会删掉记录。
+**Q: Where is chat history stored, and who receives it?**
+On your computer at `TONGPING_HOME/daemon/app-chat-room.json`. Only AIs you connect can read it. “Clear” deletes the history.
 
-**Q：AI 说「你把我禁言了」？**
-在成员列表里点它旁边的 🔕 解除禁言。
+**Q: AI says “You muted me”?**
+Click 🔕 beside it in the member list to unmute it.
 
-**Q：同时开了好几张卡片？**
-群聊是同一个房间，所有卡片看到的消息一样。实时画面只给**最新打开**的那张卡片，旧卡片关掉 20 秒后自动释放。
+**Q: What if several cards are open?**
+They share one room and the same messages. Only the **most recently opened** card receives the live view; the old card is released automatically 20 seconds after you close it.

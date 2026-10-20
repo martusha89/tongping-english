@@ -1,12 +1,12 @@
 #!/usr/bin/env node
-// 同屏 TongPing 个人版 一键启动：
-//   1. 读取 .env（命令行里已设置的变量优先）
-//   2. 启动 daemon（MCP 服务 + 卡片 + 群聊），只监听本机
-//   3. 等 daemon 健康后，启动本机 worker（真正开 Chrome 的那个进程）
-//   4. Ctrl+C 一次，两个进程一起退出
+// TongPing Personal Edition one-command startup:
+//   1. Load .env (existing command-line environment variables take precedence)
+//   2. Start daemon (MCP service + card + group chat), listening locally only
+//   3. Wait for daemon health, then start the local worker (the process that opens Chrome)
+//   4. One Ctrl+C stops both processes
 //
-// daemon 和 worker 使用同一个 TONGPING_HOME 下的两个子目录，避免两个进程抢同一个
-// Chromium profile 锁。
+// Daemon and worker use separate subdirectories under one TONGPING_HOME to avoid competing for
+// the same Chromium profile lock.
 import { spawn, spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import os from "node:os";
@@ -18,10 +18,10 @@ loadEnvFile(path.join(root, ".env"));
 
 const major = Number(process.versions.node.split(".")[0]);
 if (major < 20) {
-  fail(`需要 Node.js 20 或更新版本，当前是 ${process.version}。请先升级 Node.js。`);
+  fail(`Node.js 20 or newer is required; current version is ${process.version}. Upgrade Node.js first.`);
 }
 if (!existsSync(path.join(root, "node_modules"))) {
-  fail("还没有安装依赖。请先在项目目录运行：npm ci");
+  fail("Dependencies are not installed. Run this in the project directory first: npm ci");
 }
 
 const home = path.resolve(
@@ -46,8 +46,8 @@ const hostAllowList = (name) => {
 };
 
 if (!hasCommand("ffmpeg")) {
-  console.warn("提示：没找到 ffmpeg。逛网页和聊天不受影响，但「陪看」（延迟缓冲播放）会一直显示缓冲 0 秒。");
-  console.warn("      安装方法见 docs/INSTALL.md 的「安装 ffmpeg」一节。");
+  console.warn("Note: ffmpeg was not found. Browsing and chat work, but Watch Together (delayed buffered playback) will stay at 0 seconds buffered.");
+  console.warn("      See the “Install ffmpeg” section in docs/INSTALL.md for installation instructions.");
 }
 
 const children = [];
@@ -83,17 +83,17 @@ run("worker", path.join(root, "src", "worker-client.ts"), {
 const publicOrigin = process.env.TONGPING_PUBLIC_ORIGIN?.trim();
 console.log("");
 console.log("==============================================");
-console.log(" 同屏 TongPing 个人版 已启动");
-console.log(`  本机健康检查: ${localUrl}/health`);
-console.log(`  本机 MCP:     ${localUrl}/mcp`);
-console.log(`  手机/网页接管: ${localUrl}/live`);
-console.log(`  daemon 令牌:  ${path.join(daemonHome, "daemon-token")}`);
+console.log(" TongPing Personal Edition is running");
+console.log(`  Local health: ${localUrl}/health`);
+console.log(`  Local MCP:     ${localUrl}/mcp`);
+console.log(`  Mobile/web takeover: ${localUrl}/live`);
+console.log(`  Daemon token:  ${path.join(daemonHome, "daemon-token")}`);
 if (publicOrigin) {
-  console.log(`  公网 MCP 地址（填进 Claude / ChatGPT）: ${publicOrigin.replace(/\/+$/, "")}/mcp`);
+  console.log(`  Public MCP URL (enter in Claude / ChatGPT): ${publicOrigin.replace(/\/+$/, "")}/mcp`);
 } else {
-  console.log("  还没设置 TONGPING_PUBLIC_ORIGIN：现在只能本机客户端（Claude Code / Codex）使用。");
+  console.log("  TONGPING_PUBLIC_ORIGIN is not set: only local clients (Claude Code / Codex) can connect.");
 }
-console.log(" 关闭：在这个窗口按 Ctrl+C");
+console.log(" To stop: press Ctrl+C in this window");
 console.log("==============================================");
 console.log("");
 
@@ -121,8 +121,8 @@ function run(name, entry, extraEnv) {
   pipe(child.stderr, process.stderr);
   child.on("exit", (code, signal) => {
     if (stopping) return;
-    console.error(`${prefix}已退出（code=${code ?? "-"} signal=${signal ?? "-"}），同屏一起停止。`);
-    console.error("把上面几十行日志复制给 AI，并让它读 docs/TROUBLESHOOTING.md 排障。");
+    console.error(`${prefix}Exited (code=${code ?? "-"} signal=${signal ?? "-"}); stopping all of TongPing.`);
+    console.error("Copy the preceding few dozen log lines to AI and ask it to troubleshoot using docs/TROUBLESHOOTING.md.");
     stopAll(code || 1);
   });
   children.push(child);
@@ -139,7 +139,7 @@ async function waitForHealth(url, child) {
     } catch {}
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
-  console.error(`60 秒内 ${url}/health 没有响应。端口 ${port} 可能被占用，运行 npm run doctor 检查。`);
+  console.error(`${url}/health did not respond within 60 seconds. Port ${port} may be in use; run npm run doctor to check.`);
   stopAll(1);
 }
 
@@ -192,6 +192,6 @@ function hasCommand(command) {
 }
 
 function fail(message) {
-  console.error("错误：" + message);
+  console.error("Error: " + message);
   process.exit(1);
 }

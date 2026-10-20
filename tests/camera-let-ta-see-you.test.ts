@@ -30,11 +30,11 @@ test("muted AIs cannot look, and frames live in memory only", () => {
 
 test("each look is reported back so the card can tell the user", () => {
   assert.match(server, /frame\.lastLook = \{ by: who, at: Date\.now\(\) \}/);
-  assert.match(app, /" 看了你一眼"/);
+  assert.match(app, /" looked at you"/);
   assert.match(app, /if \(Date\.parse\(look\.at\) < cameraOpenedAt\) return;/);
 });
 
-test("「叫大家看」 shares their camera frame while the camera is on", () => {
+test("“Show Everyone” shares their camera frame while the camera is on", () => {
   assert.match(app, /const cameraShot = cameraOn \? captureCameraFrame\(960\) : null;/);
   assert.match(app, /mode: cameraShot \? "camera"/);
 });

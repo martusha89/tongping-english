@@ -27,18 +27,18 @@ test("browser app uses official MCP Apps bridge without daemon credentials", () 
   assert.match(html, /trackpad/);
   assert.match(html, /id="leftMouse"/);
   assert.match(html, /id="rightMouse"/);
-  assert.match(html, /移动 · 点按 · 双击/);
+  assert.match(html, /Move · Click · Double-click/);
   assert.match(html, /clickRemote/);
   assert.match(html, /isDouble \? 2 : 1/);
   assert.match(html, /contextMenuOpen/);
-  assert.match(html, /右键菜单已打开/);
+  assert.match(html, /Context menu open/);
   assert.match(html, /key\("Escape"\)/);
   assert.match(html, /browser_app_history/);
   assert.match(html, /browser_app_reload/);
   assert.match(html, /browser_app_context_info/);
   assert.match(html, /id="back"/);
   assert.match(html, /id="forward"/);
-  assert.match(html, /复制链接地址/);
+  assert.match(html, /Copy link address/);
   assert.match(html, /safe-area-inset-top/);
   assert.match(html, /shell\.fullscreen/);
   assert.match(html, /grid-template-areas/);
@@ -47,8 +47,8 @@ test("browser app uses official MCP Apps bridge without daemon credentials", () 
     html,
     /requestAnimationFrame\(\(\) => \{\s*refreshImage\(\);\s*scheduleLiveFrameResync\(\);\s*\}\)/,
   );
-  assert.match(html, /正在刷新页面/);
-  assert.match(html, /已刷新 ·/);
+  assert.match(html, /Refreshing page/);
+  assert.match(html, /Refreshed ·/);
   assert.match(html, /pendingRemoteMove/);
   assert.match(html, /pumpRemoteMove/);
   assert.match(html, /applyState\(data\);\s*refreshImage\(\)/); // explicit visual refresh
@@ -222,10 +222,10 @@ test("a local-login handoff is noticed fast and live comes back on its own", () 
     html,
     /if \(wasExternalLogin !== isExternalLogin\) \{[\s\S]{0,200}liveFailed = false;[\s\S]{0,200}refreshImage\(\);\s*scheduleLiveFrameResync\(\);[\s\S]{0,40}startPolling\(\);/,
   );
-  assert.match(html, /把整个 Chrome 窗口关掉（右上角 ×；只关标签页不算）/);
+  assert.match(html, /close the entire Chrome window \(not just the tab\)/);
 });
 
-test("LIVE nudges once toward 陪看 on a video page", () => {
+test("LIVE nudges once toward Watch Together on a video page", () => {
   const html = renderBrowserApp("https://browser.example");
   const start = html.indexOf("const VIDEO_PAGE_PATTERNS = [");
   const end = html.indexOf("];", start) + 2;
@@ -237,6 +237,6 @@ test("LIVE nudges once toward 陪看 on a video page", () => {
   assert.equal(matches("https://www.youtube.com/watch?v=abc"), true);
   assert.equal(matches("https://www.bilibili.com/"), false);
   assert.equal(matches("https://www.goofish.com/"), false);
-  assert.match(html, /看视频点「进入陪看」更流畅/);
+  assert.match(html, /use “Watch Together” for smoother video/);
   assert.match(html, /id="liveHint"/);
 });

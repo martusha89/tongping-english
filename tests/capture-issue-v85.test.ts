@@ -9,6 +9,6 @@ test("a failed attach reason reaches the waiting screen as a short issue code", 
   assert.match(daemon, /could not start video source\|notreadable/);
   assert.match(daemon, /"#TONGPING-CAPTURE-ISSUE:" \+ companionIssueCode\(issue\.reason\)/);
   assert.match(daemon, /if \(attached\) \{\n        companionAttachIssues\.delete\(profile\);/);
-  assert.match(app, /"电脑好像锁屏了"/);
+  assert.match(app, /"The computer appears to be locked"/);
   assert.match(app, /companionCaptureIssue && cachedSeconds < 1 && companionPhase === "preparing"/);
 });

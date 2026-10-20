@@ -4,7 +4,7 @@ import type { Duplex } from "node:stream";
 import { WebSocketServer, WebSocket } from "ws";
 import { admitWorkerSocket, workerSocketCurrent, type WorkerTransportAuthority, type WorkerTransportAuthenticator } from "./worker-transport-authority.js";
 
-/** Close code the card uses when the person leaves 陪看 for LIVE. */
+/** Close code the card uses when the person leaves Watch Together for LIVE. */
 export const COMPANION_LEAVE_CLOSE_CODE = 4001;
 
 export interface CompanionPlaybackStatus {
@@ -38,7 +38,7 @@ export interface MediaWsHubOptions {
   onAppModeClosed?: (
     profile: string,
     mode: "media" | "companion" | null,
-    /** True when the card closed it on purpose (「回到 LIVE」), not a drop. */
+    /** True when the card closed it on purpose ("Back to LIVE"), not a drop. */
     leftOnPurpose?: boolean,
   ) => void;
   onWorkerStreamStart?: (
@@ -295,7 +295,7 @@ export class MediaWsHub {
     }
   }
 
-  /** Turn the card's 陪看 away (busy server, no points left): it shows why and goes back to LIVE. */
+  /** Turn the card's Watch Together session away (busy server, no points left): it shows why and goes back to LIVE. */
   refuseApp(profile: string, code: number, reason: string): void {
     const ws = this.apps.get(profile);
     if (ws) {

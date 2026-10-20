@@ -19,11 +19,11 @@ test("the quote is the latest short cue that has already played, never a future 
 test("mood is deterministic words, omitted when audio is thin", () => {
   assert.equal(
     ticketMoodFromAudio({ state: "steady", energy: 0.2, rhythmicDensity: 1 }),
-    "平稳 · 低能量 · 舒缓",
+    "steady · low energy · relaxed",
   );
   assert.equal(
     ticketMoodFromAudio({ state: "peak", energy: 0.9, rhythmicDensity: 5 }),
-    "高潮 · 高能量 · 节奏密集",
+    "peak · high energy · rhythmically dense",
   );
   assert.equal(ticketMoodFromAudio(null), null);
   assert.equal(ticketMoodFromAudio({ state: null, energy: null }), null);

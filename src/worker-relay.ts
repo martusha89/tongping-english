@@ -154,7 +154,7 @@ export class RemoteWorkerRelay implements BrowserGateway {
           ? delivered
             ? { ok: false, code: "outcome_unknown", error: "outcome_unknown" } satisfies TrustedRelayFailure
             : { ok: false, code: "timeout", error: "timeout" } satisfies TrustedRelayFailure
-          : { ok: false, error: "同屏 local worker did not answer in time." });
+          : { ok: false, error: "TongPing local worker did not answer in time." });
       }, actionTimeoutMs);
       timer.unref?.();
 

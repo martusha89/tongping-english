@@ -1,44 +1,44 @@
-# 安全说明
+# Security
 
-同屏让 AI 操作一个**真实的、登录了你账号的**浏览器。下面是它的安全边界，以及你需要自己守住的部分。
+TongPing lets AI operate a **real browser signed into your accounts**. These are its security boundaries and the precautions you must take yourself.
 
-## 你的数据在哪
+## Where your data lives
 
-| 数据 | 位置 | 会离开你的电脑吗 |
+| Data | Location | Does it leave your computer? |
 |---|---|---|
-| 网站登录态、cookie | `TONGPING_HOME/worker/profiles/` | 不会 |
-| daemon 令牌、worker 令牌 | `TONGPING_HOME/daemon/` | 不会（除非你自己复制出去） |
-| OAuth 授权记录 | `TONGPING_HOME/daemon/oauth-store.json` | 不会 |
-| 群聊记录 | `TONGPING_HOME/daemon/app-chat-room.json`（卡片里点「清空」可清除） | 只发给你接入的 AI |
-| 页面内容、截图、画面 | 只在 AI 调用工具时发给那个 AI | 发给你接入的 AI 服务商 |
-| 审计日志 | `TONGPING_HOME/worker/audit/actions.jsonl` | 不会；只记录动作类型，**不记录输入的文字** |
+| Website login sessions, cookies | `TONGPING_HOME/worker/profiles/` | No |
+| Daemon and worker tokens | `TONGPING_HOME/daemon/` | No (unless you copy them elsewhere) |
+| OAuth authorizations | `TONGPING_HOME/daemon/oauth-store.json` | No |
+| Group chat history | `TONGPING_HOME/daemon/app-chat-room.json` (use “Clear” in the card to erase it) | Only sent to AIs you connect |
+| Page content, screenshots, screen views | Sent to the requesting AI only when it calls a tool | Sent to the AI provider you connect |
+| Audit log | `TONGPING_HOME/worker/audit/actions.jsonl` | No; records action types, **not text entered** |
 
-同屏本身不连接任何第三方服务器。唯一的例外是你主动配置的：HTTPS 隧道（流量经过隧道服务商）、卡片里的「按住说话」（音频发给 SiliconFlow）、卡片的摄像头特效（从 jsDelivr / Google 加载人脸模型脚本）、本地字幕（只在安装时从 HuggingFace 或其镜像下载一次模型；识别本身完全在本机，声音不上传）。
+TongPing itself does not connect to third-party servers. The only exceptions are features you choose to configure: HTTPS tunnels (traffic passes through the tunnel provider), “Hold to talk” in the card (audio goes to SiliconFlow), camera effects (face-model scripts load from jsDelivr / Google), and local subtitles (a one-time model download from HuggingFace or a mirror during installation; recognition itself stays local and audio is not uploaded).
 
-## 同屏替你挡住的
+## Protections TongPing provides
 
-- **只监听本机**：默认绑定 `127.0.0.1`，局域网和公网都访问不到。
-- **认证**：`/mcp` 必须带 daemon 令牌或 OAuth 令牌；OAuth 登录需要你设置的密码，10 分钟内错 10 次即锁定。
-- **Host / Origin 校验**：防 DNS 重绑定攻击，只接受白名单里的域名。
-- **密码框**：AI 不能往密码输入框里打字。
-- **高风险点击**：购买、支付、转账、删除账号等点击需要你逐次批准，批准只能用一次并绑定到具体元素。
-- **人工接管**：你点「我来操作」期间，AI 的点击、输入、导航全部被锁。
-- **网站风控保护**：小红书、抖音等出现风控/验证码页面时，自动停止 AI 在该站的写操作；并对操作频率做预算限制。
+- **Local listening only**: binds to `127.0.0.1` by default, inaccessible from the LAN or internet.
+- **Authentication**: `/mcp` requires a daemon or OAuth token. OAuth login requires your configured password; 10 failed attempts within 10 minutes trigger a lockout.
+- **Host / Origin validation**: accepts only allowlisted domains to prevent DNS rebinding attacks.
+- **Password fields**: AI cannot type into password inputs.
+- **High-risk clicks**: purchases, payments, transfers, account deletion, and similar actions require approval for each click. Approval is single-use and bound to a specific element.
+- **Human takeover**: while you use “Take control,” AI clicks, typing, and navigation are locked.
+- **Website anti-abuse protection**: risk-control / CAPTCHA pages on sites such as Xiaohongshu and Douyin automatically stop AI write actions on that site; action rates also have budgets.
 
-## 需要你自己守住的
+## Precautions you must take
 
-1. **`TONGPING_HOME` 和令牌不要给任何人。** 排障时也不要。拿到 daemon 令牌的人可以完全控制这个浏览器（以及里面登录的所有账号）。
-2. **OAuth 密码要长、要随机、要独一无二。** 开了隧道之后，登录页是公网可见的。
-3. **不要把 `TONGPING_HOST` 改成 `0.0.0.0`，不要做路由器端口映射。** 远程访问只走 HTTPS 隧道。
-4. **隧道地址不要发到公开场合**（截图、帖子、群聊）。
-5. **只接入你信任的 AI 客户端。** 每个接入的 AI 都能看到页面内容。
-6. **在同屏里登录哪些账号要想清楚。** 建议不要在同屏的浏览器里登录网银、主力邮箱这类高价值账号。
-7. 遵守各网站的用户协议；自动化操作造成的封号等后果由使用者承担。
+1. **Never share `TONGPING_HOME` or tokens**, even for troubleshooting. Anyone with the daemon token can fully control this browser and all accounts signed into it.
+2. **Use a long, random, unique OAuth password.** Opening a tunnel makes the login page publicly reachable.
+3. **Do not set `TONGPING_HOST` to `0.0.0.0` or forward router ports.** Use HTTPS tunnels for remote access.
+4. **Do not publish your tunnel address** in screenshots, posts, or group chats.
+5. **Connect only AI clients you trust.** Every connected AI can see page content.
+6. **Choose accounts carefully.** Avoid signing into high-value accounts such as online banking or your primary email in TongPing’s browser.
+7. Follow website terms of service. Users bear the consequences of automation, including account bans.
 
-## 怀疑泄露了怎么办
+## If you suspect a leak
 
-1. 立刻停止同屏，关掉隧道。
-2. 删除 `TONGPING_HOME/daemon/daemon-token`（换 daemon 令牌）和 `TONGPING_HOME/daemon/oauth-store.json`（作废所有 OAuth 授权）。
-3. 修改 `.env` 里的 `TONGPING_OAUTH_PASSWORD`。
-4. 重启同屏，在各 AI 客户端重新配置。
-5. 如果担心网站账号：在同屏浏览器里退出登录，或直接删除 `TONGPING_HOME/worker/profiles/` 下对应的 profile 文件夹，并到对应网站修改密码、踢出所有设备。
+1. Stop TongPing immediately and close the tunnel.
+2. Delete `TONGPING_HOME/daemon/daemon-token` (rotates the daemon token) and `TONGPING_HOME/daemon/oauth-store.json` (revokes all OAuth authorizations).
+3. Change `TONGPING_OAUTH_PASSWORD` in `.env`.
+4. Restart TongPing and reconfigure each AI client.
+5. For affected website accounts, sign out in TongPing’s browser or delete the corresponding profile folder under `TONGPING_HOME/worker/profiles/`; change passwords on those websites and sign out all devices.

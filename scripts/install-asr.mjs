@@ -1,11 +1,11 @@
 #!/usr/bin/env node
-// 同屏 TongPing：安装本地字幕（语音识别）服务。
-//   npm run asr:install                 自动：有 NVIDIA 显卡装 GPU 版，否则 CPU 版
-//   npm run asr:install -- --cpu        强制 CPU 版（下载小，速度慢一些）
-//   npm run asr:install -- --cn         国内网络：pip 用清华镜像，模型从 hf-mirror.com 下载
-//   npm run asr:install -- --uninstall  删除字幕服务
-// 安装位置：TONGPING_ASR_DIR（默认 TONGPING_HOME/asr，即 ~/.tongping/asr）。
-// 装完重启 npm run up 生效。没有它同屏照常工作，只是没字幕的视频 AI 读不到台词。
+// TongPing: install the local subtitle (speech recognition) service.
+//   npm run asr:install                 Automatic: GPU version with NVIDIA, otherwise CPU
+//   npm run asr:install -- --cpu        Force CPU version (smaller download, slower)
+//   npm run asr:install -- --cn         Mainland China: Tsinghua pip mirror, models from hf-mirror.com
+//   npm run asr:install -- --uninstall  Remove the subtitle service
+// Install location: TONGPING_ASR_DIR (default TONGPING_HOME/asr, or ~/.tongping/asr).
+// Restart npm run up after installation. TongPing works without it, but AI cannot read dialogue in unsubtitled videos.
 import { spawn, spawnSync } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
@@ -27,41 +27,41 @@ const HF_CN = "https://hf-mirror.com";
 
 if (args.has("--uninstall")) {
   rmSync(asrDir, { recursive: true, force: true });
-  console.log(`已删除 ${asrDir}。已下载的模型缓存在 ~/.cache/huggingface，不需要可手动删除。`);
-  console.log("重启 npm run up 生效。");
+  console.log(`Removed ${asrDir}. Downloaded models remain cached at ~/.cache/huggingface; remove them manually if no longer needed.`);
+  console.log("Restart npm run up for changes to take effect.");
   process.exit(0);
 }
 
 const cn = args.has("--cn");
 const wantGpu = !args.has("--cpu") && process.platform !== "darwin" && hasNvidiaGpu();
-step(`安装位置：${asrDir}`);
-step(`模式：${wantGpu ? "GPU（检测到 NVIDIA 显卡，约下载 1.3 GB 运行库 + 1.6 GB 模型）" : "CPU（约下载 0.3 GB 运行库 + 0.5 GB 模型）"}${cn ? "，国内镜像" : ""}`);
+step(`Install location: ${asrDir}`);
+step(`Mode: ${wantGpu ? "GPU (NVIDIA detected; downloads about 1.3 GB of runtime libraries + a 1.6 GB model)" : "CPU (downloads about 0.3 GB of runtime libraries + a 0.5 GB model)"}${cn ? ", mainland China mirrors" : ""}`);
 
 // 1. Python 3.9 - 3.14
 const python = findPython();
 if (!python) {
-  fail("没找到 Python 3.9–3.14。请先安装 Python 3.11（https://www.python.org/downloads/ ，Windows 安装时勾选「Add python.exe to PATH」），然后重开终端再运行。");
+  fail("Python 3.9–3.14 was not found. Install Python 3.11 (https://www.python.org/downloads/ ; on Windows, check “Add python.exe to PATH”), then reopen the terminal and retry.");
 }
-step(`使用 Python：${python.label}（${python.version}）`);
+step(`Using Python: ${python.label} (${python.version})`);
 
 // 2. venv
 mkdirSync(asrDir, { recursive: true });
 if (!existsSync(venvPython)) {
-  step("创建独立的 Python 虚拟环境…");
+  step("Creating an isolated Python virtual environment…");
   run(python.cmd, [...python.args, "-m", "venv", venv]);
 }
 
 // 3. packages
 const pipIndex = cn ? ["-i", PIP_CN] : [];
-step("安装 faster-whisper（第一次需要几分钟）…");
+step("Installing faster-whisper (the first installation takes a few minutes)…");
 run(venvPython, ["-m", "pip", "install", "--disable-pip-version-check", "-q", "--upgrade", "pip"], { allowFail: true });
 // av 19 removed an argument faster-whisper 1.2.1 still passes ("open() got an
 // unexpected keyword argument 'metadata_errors'"), so keep PyAV on 18.x.
 run(venvPython, ["-m", "pip", "install", "--disable-pip-version-check", ...pipIndex, "faster-whisper==1.2.1", "av>=11,<19"]);
 if (wantGpu) {
-  step("安装 GPU 运行库（cuBLAS / cuDNN，体积较大）…");
+  step("Installing GPU runtime libraries (cuBLAS / cuDNN; large download)…");
   const gpu = run(venvPython, ["-m", "pip", "install", "--disable-pip-version-check", ...pipIndex, "nvidia-cublas-cu12", "nvidia-cudnn-cu12==9.*"], { allowFail: true });
-  if (!gpu) console.warn("  GPU 运行库安装失败，会自动退回 CPU 模式（慢一些但能用）。");
+  if (!gpu) console.warn("  GPU runtime installation failed; will fall back to CPU mode (slower but functional).");
 }
 
 // 4. server script
@@ -71,18 +71,18 @@ copyFileSync(path.join(root, "asr", "asr_server.py"), path.join(asrDir, "asr_ser
 if (cn) setEnvLine("HF_ENDPOINT", HF_CN);
 
 // 6. warm up: downloads the model once and checks that it loads
-step("下载并加载模型（第一次可能要几分钟，取决于网速）…");
+step("Downloading and loading the model (may take a few minutes initially, depending on connection speed)…");
 const warm = await warmUp();
 if (!warm.ok) {
-  console.error("\n模型加载失败：" + warm.error);
+  console.error("\nModel failed to load: " + warm.error);
   if (/huggingface|hf\.co|Connection|timed out|resolve|SSL|ProxyError|MaxRetry/i.test(warm.error) && !cn) {
-    console.error("看起来是连不上 huggingface.co。国内网络请改用：npm run asr:install -- --cn");
+    console.error("Cannot seem to reach huggingface.co. For mainland China networks, use: npm run asr:install -- --cn");
   }
   process.exit(1);
 }
 console.log("");
-console.log(`✅ 字幕服务已就绪：模型 ${warm.model}，设备 ${warm.device}，加载用时 ${warm.seconds}s`);
-console.log("   重启同屏（Ctrl+C 后再 npm run up）后生效。陪看没有字幕的视频时，AI 也能读到台词。");
+console.log(`✅ Subtitle service ready: model ${warm.model}, device ${warm.device}, loaded in ${warm.seconds}s`);
+console.log("   Restart TongPing (Ctrl+C, then npm run up) to enable it. AI can then read dialogue in unsubtitled videos during Watch Together.");
 
 function hasNvidiaGpu() {
   try { return spawnSync("nvidia-smi", ["-L"], { encoding: "utf8", windowsHide: true }).status === 0; } catch { return false; }
@@ -108,7 +108,7 @@ function run(cmd, argv, { allowFail = false } = {}) {
   const result = spawnSync(cmd, argv, { stdio: "inherit", windowsHide: true });
   if (result.status === 0) return true;
   if (allowFail) return false;
-  fail(`命令失败：${cmd} ${argv.join(" ")}\n网络问题可加 --cn 重试；把上面的报错发给 AI 并让它读 docs/TROUBLESHOOTING.md 的 F4。`);
+  fail(`Command failed: ${cmd} ${argv.join(" ")}\nFor network issues, retry with --cn; send the error above to AI and ask it to read F4 in docs/TROUBLESHOOTING.md.`);
 }
 
 function warmUp() {
@@ -120,7 +120,7 @@ function warmUp() {
     });
     let stderr = "";
     let buffer = "";
-    const timer = setTimeout(() => { child.kill(); resolve({ ok: false, error: "30 分钟内没有加载完成（网速太慢？）" }); }, 30 * 60_000);
+    const timer = setTimeout(() => { child.kill(); resolve({ ok: false, error: "Loading did not finish within 30 minutes (connection too slow?)" }); }, 30 * 60_000);
     child.stderr.on("data", (d) => { stderr = (stderr + d).slice(-2000); });
     child.stdout.setEncoding("utf8");
     child.stdout.on("data", (chunk) => {
@@ -141,7 +141,7 @@ function warmUp() {
       }
       buffer = buffer.slice(buffer.lastIndexOf("\n") + 1);
     });
-    child.on("exit", (code) => { clearTimeout(timer); resolve({ ok: false, error: `进程退出 code=${code}\n${stderr.slice(-800)}` }); });
+    child.on("exit", (code) => { clearTimeout(timer); resolve({ ok: false, error: `Process exited with code=${code}\n${stderr.slice(-800)}` }); });
   });
 }
 
@@ -153,7 +153,7 @@ function setEnvLine(key, value) {
   text = re.test(text) ? text.replace(re, `${key}=${value}`) : text.replace(/\s*$/, "\n") + `${key}=${value}\n`;
   writeFileSync(envFile, text);
   process.env[key] = value;
-  step(`已在 .env 写入 ${key}=${value}`);
+  step(`Wrote ${key}=${value} to .env`);
 }
 
 function step(message) { console.log("▶ " + message); }

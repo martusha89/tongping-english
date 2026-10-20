@@ -15,8 +15,8 @@ test("companion UI exposes explicit LIVE, preparing, and companion states", () =
     'id="companionCancel"',
     'id="companionStart"',
     'let companionPhase = "idle"',
-    '"准备中"',
-    '"陪看"',
+    '"Preparing"',
+    '"Watch Together"',
     '"LIVE"',
   ]) {
     assert.ok(app.includes(token), token);
@@ -31,13 +31,13 @@ test("preparing mode can always return to realtime", () => {
   assert.ok(app.includes('refreshImage();'));
 });
 
-test("loading UI represents real buffering work rather than a blind timer", () => {
+test("loading UI represents Actual buffering work rather than a blind timer", () => {
   assert.ok(app.includes('async function probeCompanionPlaylist'));
   assert.ok(app.includes('cache: "no-store"'));
   assert.ok(app.includes('segmentCount'));
   assert.ok(app.includes('#TONGPING-BUFFERED-SECONDS:'));
-  assert.ok(app.includes('正在攒一点点画面'));
-  assert.ok(app.includes('真实缓存'));
+  assert.ok(app.includes('Building a short buffer'));
+  assert.ok(app.includes('Actual buffer'));
   assert.ok(app.includes('Math.floor(companionBufferedSeconds)'));
 });
 

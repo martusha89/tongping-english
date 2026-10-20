@@ -28,8 +28,8 @@ test("plain left tap stays on realtime websocket with a real press interval", ()
   assert.ok(body.includes('postPointer("down"'));
   assert.ok(body.includes("setTimeout(resolve, 36)"));
   assert.ok(body.includes('postPointer("up"'));
-  assert.ok(body.includes("发送中…"));
-  assert.ok(body.includes("已发送"));
+  assert.ok(body.includes("Sending…"));
+  assert.ok(body.includes("Sent"));
 });
 
 test("double and right click still preserve ordered pointer down/up", () => {

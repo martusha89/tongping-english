@@ -256,7 +256,7 @@ export class LiveWsHub {
     if (!admitCard(card)) {
       this.upgradeStats.appRejected += 1;
       this.upgradeStats.appRejectedCard += 1;
-      rejectUpgrade(socket, 409, "A newer 同屏 card is open");
+      rejectUpgrade(socket, 409, "A newer TongPing card is open");
       return true;
     }
 

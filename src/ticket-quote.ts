@@ -1,4 +1,4 @@
-// Memory-ticket helpers shared by the personal and hosted 同屏 servers.
+// Memory-ticket helpers shared by the personal and hosted TongPing servers.
 
 // One short, already-played line for the ticket; never a cue after cutoff.
 export function pickTicketQuote(
@@ -27,22 +27,22 @@ export function pickTicketQuote(
 export function ticketMoodFromAudio(summary: any): string | null {
   if (!summary || typeof summary.energy !== "number") return null;
   const stateWord: Record<string, string> = {
-    calm: "安静",
-    steady: "平稳",
-    build: "慢慢升温",
-    peak: "高潮",
-    release: "余韵",
+    calm: "calm",
+    steady: "steady",
+    build: "building gradually",
+    peak: "peak",
+    release: "afterglow",
   };
   const words: string[] = [];
   if (typeof summary.state === "string" && stateWord[summary.state]) {
     words.push(stateWord[summary.state]!);
   }
   words.push(
-    summary.energy < 0.3 ? "低能量" : summary.energy < 0.65 ? "中等能量" : "高能量",
+    summary.energy < 0.3 ? "low energy" : summary.energy < 0.65 ? "medium energy" : "high energy",
   );
   if (typeof summary.rhythmicDensity === "number") {
     words.push(
-      summary.rhythmicDensity < 1.5 ? "舒缓" : summary.rhythmicDensity < 4 ? "有律动" : "节奏密集",
+      summary.rhythmicDensity < 1.5 ? "relaxed" : summary.rhythmicDensity < 4 ? "rhythmic" : "rhythmically dense",
     );
   }
   return words.length >= 2 ? words.join(" · ") : null;

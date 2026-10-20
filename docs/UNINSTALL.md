@@ -1,38 +1,38 @@
-# 卸载同屏 TongPing 个人版
+# Uninstall TongPing Personal Edition
 
-按顺序做完，电脑上就不会再留下同屏的任何东西。只想「暂时不用」的话，第 1 步停掉就够了。
+Follow these steps in order to remove everything TongPing leaves on your computer. If you only want to stop using it temporarily, step 1 is enough.
 
-## 1. 停止同屏
+## 1. Stop TongPing
 
-- 在 `npm run up`（或 `启动同屏.cmd`）的窗口按 `Ctrl+C`，或直接关掉窗口。
-- 确认停干净：浏览器打开 `http://127.0.0.1:45921/health`，应该**打不开**。
-  - 还能打开：Windows 打开任务管理器 →「详细信息」，结束命令行里含 `tongping` 的 `node.exe`；macOS/Linux 运行 `pkill -f tongping`。
-- 同时关掉 cloudflared 等隧道窗口。
+- Press `Ctrl+C` in the `npm run up` (or `Start-TongPing.cmd`) window, or close the window.
+- Confirm it stopped: `http://127.0.0.1:45921/health` should **not load** in a browser.
+  - If it still loads: Windows → Task Manager → Details → end the `node.exe` whose command line contains `tongping`; macOS/Linux: run `pkill -f tongping`.
+- Close cloudflared or other tunnel windows too.
 
-## 2. 断开 AI 的连接
+## 2. Disconnect AI clients
 
-| 客户端 | 操作 |
+| Client | Action |
 |---|---|
-| claude.ai | 设置 → 连接器 → 找到同屏 → 删除/断开 |
-| ChatGPT | 设置 → 应用与连接器 → 找到同屏 → 删除 |
-| Claude Code | `claude mcp remove tongping`（添加时用了 `-s user` 就加 `-s user`） |
+| claude.ai | Settings → Connectors → TongPing → Remove/Disconnect |
+| ChatGPT | Settings → Apps & Connectors → TongPing → Remove |
+| Claude Code | `claude mcp remove tongping` (add `-s user` if you used it when adding) |
 | Codex | `codex mcp remove tongping` |
 
-## 3. 删除环境变量（只有按 CONNECT.md 给 Codex 设过才需要）
+## 3. Remove the environment variable (only if set for Codex per CONNECT.md)
 
-- Windows PowerShell：`[Environment]::SetEnvironmentVariable("TONGPING_TOKEN", $null, "User")`，然后重开终端。
-- macOS / Linux：从 `~/.zshrc` 或 `~/.bashrc` 里删掉 `export TONGPING_TOKEN=...` 那行。
+- Windows PowerShell: `[Environment]::SetEnvironmentVariable("TONGPING_TOKEN", $null, "User")`, then reopen the terminal.
+- macOS / Linux: remove the `export TONGPING_TOKEN=...` line from `~/.zshrc` or `~/.bashrc`.
 
-## 4. 删除数据目录（登录态、令牌、聊天记录）
+## 4. Delete the data directory (login sessions, tokens, chat history)
 
-> ⚠️ 删除后所有网站都要重新登录，所有连接器都要重新添加。想保留就先复制一份。
+> ⚠️ After deletion, you must sign into every website again and re-add all connectors. Make a copy first if you want to keep the data.
 
-| 系统 | 默认位置 |
+| System | Default location |
 |---|---|
-| Windows | `C:\Users\你的用户名\.tongping` |
+| Windows | `C:\Users\YOUR_USERNAME\.tongping` |
 | macOS / Linux | `~/.tongping` |
 
-如果你在 `.env` 里设过 `TONGPING_HOME`，删那个目录。
+If you set `TONGPING_HOME` in `.env`, delete that directory instead.
 
 ```powershell
 # Windows PowerShell
@@ -43,33 +43,33 @@ Remove-Item -Recurse -Force "$env:USERPROFILE\.tongping"
 rm -rf ~/.tongping
 ```
 
-提示「文件正在使用」：说明同屏或它开的 Chrome 还在运行，回到第 1 步。
+“File in use” means TongPing or its Chrome is still running; return to step 1.
 
-## 5. 删除同屏文件夹
+## 5. Delete the TongPing folder
 
-直接删除解压/clone 出来的整个文件夹（包括 `node_modules` 和 `.env`）。
+Delete the entire extracted/cloned folder, including `node_modules` and `.env`.
 
-提示「文件夹正在使用」/「另一个程序正在使用此文件」：**关掉所有停在这个文件夹里的终端窗口和 VS Code**（终端的当前目录也会占用文件夹），再删。
+If you see “Folder in use” / “Another program is using this file,” **close every terminal and VS Code window open in that folder** (a terminal’s current directory also keeps it in use), then delete it.
 
-本地字幕（如果装过）在 `TONGPING_HOME/asr` 里，会随数据目录一起删掉。下载的语音识别模型在 `~/.cache/huggingface/hub`（Windows：`C:\Users\你的用户名\.cache\huggingface\hub`）下名字含 `faster-whisper` 的文件夹，别的程序没在用的话可以删，能省 0.5–1.6 GB。
+Local subtitles, if installed, live in `TONGPING_HOME/asr` and are removed with the data directory. Downloaded speech recognition models live in folders containing `faster-whisper` under `~/.cache/huggingface/hub` (Windows: `C:\Users\YOUR_USERNAME\.cache\huggingface\hub`). Delete those if no other program uses them to free 0.5–1.6 GB.
 
-## 6.（可选）删除 Playwright 自带的 Chromium
+## 6. Optional: remove Playwright’s Chromium
 
-只有执行过 `npx playwright install chromium` 才有。如果别的项目也在用 Playwright，**不要删**。
+This exists only if you ran `npx playwright install chromium`. **Do not delete it** if other projects use Playwright.
 
-| 系统 | 位置 |
+| System | Location |
 |---|---|
 | Windows | `%LOCALAPPDATA%\ms-playwright` |
 | macOS | `~/Library/Caches/ms-playwright` |
 | Linux | `~/.cache/ms-playwright` |
 
-## 7.（可选）卸载为同屏安装的软件
+## 7. Optional: uninstall software installed for TongPing
 
-Node.js、ffmpeg、cloudflared 如果只为同屏而装，可以按各自的方式卸载（Windows「设置 → 应用」；`winget uninstall Gyan.FFmpeg`；`brew uninstall ffmpeg cloudflared` 等）。别的软件也可能依赖 Node.js，不确定就留着。
+If you installed Node.js, ffmpeg, or cloudflared solely for TongPing, uninstall them normally (Windows Settings → Apps; `winget uninstall Gyan.FFmpeg`; `brew uninstall ffmpeg cloudflared`, etc.). Other software may depend on Node.js; keep it if unsure.
 
-## 确认卸载干净
+## Confirm complete removal
 
-- `http://127.0.0.1:45921/health` 打不开
-- `~/.tongping`（或你设的 `TONGPING_HOME`）不存在
-- `claude mcp list` / `codex mcp list` 里没有 `tongping`
-- claude.ai / ChatGPT 的连接器列表里没有同屏
+- `http://127.0.0.1:45921/health` does not load.
+- `~/.tongping` (or your configured `TONGPING_HOME`) does not exist.
+- `claude mcp list` / `codex mcp list` no longer lists `tongping`.
+- TongPing is absent from claude.ai / ChatGPT connector lists.

@@ -7,7 +7,7 @@ const frame=document.createElement('canvas'),fg=frame.getContext('2d',{alpha:fal
 let onStatus=()=>{};const report=s=>{try{onStatus(s);}catch(_){}};
 class Renderer{
  constructor(c){
-  this.c=c;const gl=this.gl=c.getContext('webgl',{alpha:false,antialias:false,depth:false,stencil:false,preserveDrawingBuffer:true,powerPreference:'high-performance'});if(!gl)throw Error('此浏览器没有可用的 WebGL，请用 Safari 打开');
+  this.c=c;const gl=this.gl=c.getContext('webgl',{alpha:false,antialias:false,depth:false,stencil:false,preserveDrawingBuffer:true,powerPreference:'high-performance'});if(!gl)throw Error('WebGL is unavailable in this browser. Open this page in Safari.');
   const vs=`attribute vec2 aPosition;attribute vec2 aUV;attribute float aMask;varying vec2 uv;varying float mask;uniform vec2 resolution;uniform float mirror;void main(){vec2 p=aPosition/resolution; p.x=mix(p.x,1.0-p.x,mirror);gl_Position=vec4(p.x*2.0-1.0,1.0-p.y*2.0,0.,1.);uv=aUV/resolution;mask=aMask;}`;
   const fs=`precision highp float;varying vec2 uv;varying float mask;uniform sampler2D source;uniform sampler2D smoothTex;uniform sampler2D skinMask;uniform float beauty;uniform float toon;uniform vec2 pixel;void main(){vec3 c=texture2D(source,uv).rgb;if(beauty<.01||mask<.005){gl_FragColor=vec4(c,1.);return;}vec3 low=texture2D(smoothTex,uv).rgb;vec3 l=texture2D(source,uv-vec2(pixel.x*2.,0.)).rgb;vec3 r=texture2D(source,uv+vec2(pixel.x*2.,0.)).rgb;vec3 u=texture2D(source,uv-vec2(0.,pixel.y*2.)).rgb;vec3 d=texture2D(source,uv+vec2(0.,pixel.y*2.)).rgb;float edge=length(l-r)+length(u-d);float protect=1.-smoothstep(.38,.95,edge);float lum=dot(c,vec3(.2126,.7152,.0722));float chroma=max(c.r,max(c.g,c.b))-min(c.r,min(c.g,c.b));float skin=1.-smoothstep(.48,.80,chroma);float amount=beauty*texture2D(skinMask,uv).r*mix(.2,1.,protect)*skin;vec3 detail=c-low;vec3 foundation=low+detail*.24;foundation=mix(foundation,vec3(dot(low,vec3(.299,.587,.114))),.035);foundation+=vec3(.022,.018,.014)*(1.-lum);foundation=mix(foundation,mix(low,floor(low*24.+.5)/24.,.18)+vec3(.027,.018,.020),toon*.48);gl_FragColor=vec4(clamp(mix(c,foundation,amount*.9),0.,1.),1.);}`;
   this.program=this.programOf(vs,fs);
@@ -22,7 +22,7 @@ class Renderer{
  programOf(v,f){const gl=this.gl;function shader(type,code){const s=gl.createShader(type);gl.shaderSource(s,code);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(s));return s;}const p=gl.createProgram(),a=shader(gl.VERTEX_SHADER,v),b=shader(gl.FRAGMENT_SHADER,f);gl.attachShader(p,a);gl.attachShader(p,b);gl.linkProgram(p);gl.deleteShader(a);gl.deleteShader(b);if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(p));return p;}
  texture(){const gl=this.gl,t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);return t;}
  loc(p,n){return this.gl.getUniformLocation(p,n);}
- resize(w,h){if(w===this.w&&h===this.h)return;this.w=w;this.h=h;this.c.width=w;this.c.height=h;this.bw=Math.ceil(w/2);this.bh=Math.ceil(h/2);const gl=this.gl;for(let i=0;i<2;i++){gl.bindTexture(gl.TEXTURE_2D,this.smooth[i]);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,this.bw,this.bh,0,gl.RGBA,gl.UNSIGNED_BYTE,null);gl.bindFramebuffer(gl.FRAMEBUFFER,this.fbos[i]);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,this.smooth[i],0);if(gl.checkFramebufferStatus(gl.FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE)throw Error('粉底缓冲区创建失败');}gl.bindFramebuffer(gl.FRAMEBUFFER,null);}
+ resize(w,h){if(w===this.w&&h===this.h)return;this.w=w;this.h=h;this.c.width=w;this.c.height=h;this.bw=Math.ceil(w/2);this.bh=Math.ceil(h/2);const gl=this.gl;for(let i=0;i<2;i++){gl.bindTexture(gl.TEXTURE_2D,this.smooth[i]);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,this.bw,this.bh,0,gl.RGBA,gl.UNSIGNED_BYTE,null);gl.bindFramebuffer(gl.FRAMEBUFFER,this.fbos[i]);gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,this.smooth[i],0);if(gl.checkFramebufferStatus(gl.FRAMEBUFFER)!==gl.FRAMEBUFFER_COMPLETE)throw Error('Could not create the makeup buffer');}gl.bindFramebuffer(gl.FRAMEBUFFER,null);}
  updateMask(lm,w,h){
   const c=this.maskCanvas,g=this.maskContext;c.width=Math.ceil(w/3);c.height=Math.ceil(h/3);const sx=c.width,sy=c.height;
   g.fillStyle='black';g.fillRect(0,0,c.width,c.height);
@@ -193,13 +193,13 @@ async function makeWorker(){
  const url=URL.createObjectURL(new Blob(['('+workerBody.toString()+')()'],{type:'text/javascript'}));let worker;
  try{worker=new Worker(url);}finally{URL.revokeObjectURL(url);}
  let seq=0;const pending=new Map();const failAll=err=>{for(const p of pending.values()){clearTimeout(p.timer);p.reject(err);}pending.clear();};
- const ready=new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('模型加载超时')),45000);worker.onmessage=e=>{const d=e.data;if(d.type==='ready'){clearTimeout(timer);resolve();}else if(d.type==='error'){clearTimeout(timer);const err=Error(d.message);if(pending.size)failAll(err);else reject(err);}else if(d.type==='result'){const p=pending.get(d.id);if(p){clearTimeout(p.timer);pending.delete(d.id);p.resolve(d.lm);}}};worker.onerror=e=>{clearTimeout(timer);const err=Error(e.message||'Worker 失败');reject(err);failAll(err);};});
+ const ready=new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('Model loading timed out')),45000);worker.onmessage=e=>{const d=e.data;if(d.type==='ready'){clearTimeout(timer);resolve();}else if(d.type==='error'){clearTimeout(timer);const err=Error(d.message);if(pending.size)failAll(err);else reject(err);}else if(d.type==='result'){const p=pending.get(d.id);if(p){clearTimeout(p.timer);pending.delete(d.id);p.resolve(d.lm);}}};worker.onerror=e=>{clearTimeout(timer);const err=Error(e.message||'Worker failed');reject(err);failAll(err);};});
  worker.postMessage({type:'init',cdn:CDN,model:MODEL});try{await ready;}catch(e){worker.terminate();throw e;}
- return {kind:'Worker',detect:async(image,t)=>{const bitmap=await createImageBitmap(image),id=++seq;return new Promise((resolve,reject)=>{const timer=setTimeout(()=>{pending.delete(id);reject(Error('人脸检测超时'));},10000);pending.set(id,{resolve,reject,timer});try{worker.postMessage({type:'frame',id,image:bitmap,time:t},[bitmap]);}catch(e){bitmap.close();clearTimeout(timer);pending.delete(id);reject(e);}});},close:()=>{failAll(Error('检测已关闭'));worker.terminate();}};
+ return {kind:'Worker',detect:async(image,t)=>{const bitmap=await createImageBitmap(image),id=++seq;return new Promise((resolve,reject)=>{const timer=setTimeout(()=>{pending.delete(id);reject(Error('Face detection timed out'));},10000);pending.set(id,{resolve,reject,timer});try{worker.postMessage({type:'frame',id,image:bitmap,time:t},[bitmap]);}catch(e){bitmap.close();clearTimeout(timer);pending.delete(id);reject(e);}});},close:()=>{failAll(Error('Detection is closed'));worker.terminate();}};
 }
 
-async function makeMain(){const {FaceLandmarker,FilesetResolver}=await import(CDN+'/vision_bundle.mjs');const fs=await FilesetResolver.forVisionTasks(CDN+'/wasm');const options={baseOptions:{modelAssetPath:MODEL,delegate:'GPU'},runningMode:'VIDEO',numFaces:1,minFaceDetectionConfidence:.6,minFacePresenceConfidence:.6,minTrackingConfidence:.65};let det;try{det=await FaceLandmarker.createFromOptions(fs,options);}catch(_){options.baseOptions.delegate='CPU';det=await FaceLandmarker.createFromOptions(fs,options);}return {kind:'兼容模式',detect:async(image,t)=>det.detectForVideo(image,t).faceLandmarks[0]||null,close:()=>det.close()};}
-function loadEngine(){if(engine)return Promise.resolve(engine);if(enginePromise)return enginePromise;enginePromise=(async()=>{try{if(typeof Worker==='undefined'||typeof createImageBitmap==='undefined')throw Error('Worker unavailable');engine=await makeWorker();}catch(e){console.warn('Worker fallback',e);report('正在加载兼容模式…');engine=await makeMain();}return engine;})().finally(()=>{enginePromise=null;});return enginePromise;}
+async function makeMain(){const {FaceLandmarker,FilesetResolver}=await import(CDN+'/vision_bundle.mjs');const fs=await FilesetResolver.forVisionTasks(CDN+'/wasm');const options={baseOptions:{modelAssetPath:MODEL,delegate:'GPU'},runningMode:'VIDEO',numFaces:1,minFaceDetectionConfidence:.6,minFacePresenceConfidence:.6,minTrackingConfidence:.65};let det;try{det=await FaceLandmarker.createFromOptions(fs,options);}catch(_){options.baseOptions.delegate='CPU';det=await FaceLandmarker.createFromOptions(fs,options);}return {kind:'Compatibility mode',detect:async(image,t)=>det.detectForVideo(image,t).faceLandmarks[0]||null,close:()=>det.close()};}
+function loadEngine(){if(engine)return Promise.resolve(engine);if(enginePromise)return enginePromise;enginePromise=(async()=>{try{if(typeof Worker==='undefined'||typeof createImageBitmap==='undefined')throw Error('Worker unavailable');engine=await makeWorker();}catch(e){console.warn('Worker fallback',e);report('Loading compatibility mode…');engine=await makeMain();}return engine;})().finally(()=>{enginePromise=null;});return enginePromise;}
 
 function quality(lm,t){
  if(!lm||lm.length<468||lm.some(p=>!Number.isFinite(p.x)||!Number.isFinite(p.y))) {lastMetrics=null;return 0;}
@@ -211,7 +211,7 @@ function quality(lm,t){
 }
 
 // ----- card API -----
-// Every look except 原图 sits on the 美颜 base (smoothing + light makeup).
+// Every look except Original sits on the Beauty base (smoothing + light makeup).
 const LOOKS={
  none:{mode:'none',beauty:false,decor:true,makeup:false,stickers:[]},
  soft:{mode:'none',beauty:true,decor:true,makeup:true,stickers:[]},
@@ -232,24 +232,24 @@ async function tick(t){
  lastTick=t;lastTime=video.currentTime;
  try{
   if(!drawPlain()){raf=requestAnimationFrame(tick);return;}
-  let lm=null;if(engine&&effectsReady){try{lm=await engine.detect(frame,t);}catch(e){effectsReady=false;report('特效暂停：'+e.message+' · 先用原图');}}
+  let lm=null;if(engine&&effectsReady){try{lm=await engine.detect(frame,t);}catch(e){effectsReady=false;report('Effects paused: '+e.message+' · showing the original image');}}
   if(gen!==generation||!running)return;
   const q=lm?quality(lm,t):0;tracked=!!lm;
   renderer.draw(frame,q>0?lm:null,mode,intensity*q,beauty&&q>.35,facing==='user',decor);
- }catch(e){if(gen===generation)report('画面出错：'+e.message);}
+ }catch(e){if(gen===generation)report('Video error: '+e.message);}
  if(gen===generation&&running)raf=requestAnimationFrame(tick);
 }
 function close(){generation++;running=false;cancelAnimationFrame(raf);if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;if(video)video.srcObject=null;lastTime=-1;lastMetrics=null;tracked=false;}
 async function open(opts){
  close();const gen=generation;video=opts.video;canvas=opts.canvas;onStatus=opts.onStatus||(()=>{});
- if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw Object.assign(Error('这里用不了摄像头'),{name:'NotSupportedError'});
+ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw Object.assign(Error('Camera access is unavailable here'),{name:'NotSupportedError'});
  const incoming=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:facing},width:{ideal:640},height:{ideal:854},frameRate:{ideal:24,max:30}}});
  if(gen!==generation){incoming.getTracks().forEach(t=>t.stop());return false;}
  stream=incoming;video.srcObject=stream;video.muted=true;video.playsInline=true;await video.play();
  if(!renderer||renderer.canvas!==canvas)renderer=new SceneRenderer(canvas);
  running=true;raf=requestAnimationFrame(tick);
- report('摄像头开着 · 正在加载特效…');
- loadEngine().then(()=>{if(gen!==generation)return;effectsReady=true;report('');}).catch(e=>{if(gen!==generation)return;effectsReady=false;report('特效没加载出来，先用原图（'+e.message+'）');});
+ report('Camera on · Loading effects…');
+ loadEngine().then(()=>{if(gen!==generation)return;effectsReady=true;report('');}).catch(e=>{if(gen!==generation)return;effectsReady=false;report('Effects failed to load; showing the original image ('+e.message+')');});
  return true;
 }
 async function flip(){facing=facing==='user'?'environment':'user';if(stream&&video&&canvas)return open({video,canvas,onStatus});}

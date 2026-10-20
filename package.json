@@ -3,7 +3,7 @@
   "version": "0.4.0-personal.2",
   "private": true,
   "type": "module",
-  "description": "同屏 TongPing 个人版：给 AI 用的共享浏览器（看网页、陪看视频、群聊），通过 MCP 接入 Claude / ChatGPT",
+  "description": "TongPing Personal Edition: a shared browser for AI (web browsing, watching videos together, group chat), connecting Claude / ChatGPT through MCP",
   "engines": {
     "node": ">=20"
   },

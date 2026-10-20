@@ -425,7 +425,7 @@ const audioWatchdog = setInterval(() => {
 }, 500);
 audioWatchdog.unref?.();
 
-// While someone watches (live view or 陪看), keep the browser window from
+// While someone watches (live view or Watch Together), keep the browser window from
 // sitting minimized: a minimized Chrome stops painting.
 const windowRestoreTimer = setInterval(() => {
   if (stopping) return;
@@ -718,7 +718,7 @@ async function execute(command: any) {
     command.action === "human_media_seek" &&
     profile
   ) {
-    // Hosted 陪看 start-from-top: the same seek the personal relay calls as
+    // Hosted Watch Together start-from-top: the same seek the personal relay calls as
     // browser_media_seek (which the hosted media lane does not carry).
     return gateway.call(
       "browser_media_seek",
@@ -942,7 +942,7 @@ async function finishExternalLogin(
 
   if (childStillRunning(session)) {
     throw new Error(
-      "本机登录窗口还开着。先在电脑上完成登录并关闭那个 Chrome/Edge 窗口，再点“登录好了，接回”。",
+      "The local login window is still open. Finish signing in on the computer and close that Chrome/Edge window, then click “Signed in, reconnect.”",
     );
   }
 
@@ -954,7 +954,7 @@ async function finishExternalLogin(
   if (!openReply.ok) {
     throw new Error(
       (openReply.error ?? "Could not reopen the browser profile.") +
-        " 如果本机 Chrome/Edge 还开着，请先把那个登录窗口关掉再重试。",
+        " If the local Chrome/Edge window is still open, close that login window before trying again.",
     );
   }
 
@@ -1375,7 +1375,7 @@ function sendMediaEvent(profile: string, event: LiveMediaEvent): void {
     }
 
     if (!event.buffer || event.buffer.length <= 0) return;
-    // 陪看 plays from a delayed buffer, so a short uplink hiccup (a proxy
+    // Watch Together plays from a delayed buffer, so a short uplink hiccup (a proxy
     // pause, a Wi-Fi blip) can drain on its own; ~16 s at 2 Mbit/s before
     // the recorder is torn down, which costs every viewer a full rebuffer.
     const backpressureLimit =
@@ -2023,7 +2023,7 @@ async function ensureControlSocket(
         void stopAudio(profile).then(() => reply({ ok: true }), fail);
         return;
       }
-      // 陪看: the same media commands the personal relay sends, by name.
+      // Watch Together: the same media commands the personal relay sends, by name.
       if (message.type === "media" && HOSTED_MEDIA_ACTIONS.has(message.action)) {
         if (externalLogins.has(profile) && message.action !== "human_media_stop") {
           reply({ ok: false, error: "local login in progress" });
@@ -2035,7 +2035,7 @@ async function ensureControlSocket(
         return;
       }
       if (message.type === "pointer" && externalLogins.has(profile)) {
-        reply({ ok: false, error: "本机登录窗口还开着，登录好再接回。" });
+        reply({ ok: false, error: "The local login window is still open. Finish signing in before reconnecting." });
         return;
       }
       if (message.type === "app_command") {
@@ -2140,7 +2140,7 @@ async function ensureControlSocket(
 }
 
 /**
- * The 同屏 card's own buttons (navigate, history, reload, typing, keys,
+ * The TongPing card's own buttons (navigate, history, reload, typing, keys,
  * takeover) for a hosted route. A fixed list: anything else is refused.
  */
 async function runHostedAppCommand(
@@ -2160,7 +2160,7 @@ async function runHostedAppCommand(
     action !== "external_login_start" &&
     action !== "external_login_finish"
   ) {
-    throw new Error("本机登录窗口还开着。先在电脑上登录好并关掉那个窗口，再点“登录好了，接回”。");
+    throw new Error("The local login window is still open. Finish signing in on the computer and close that window, then click “Signed in, reconnect.”");
   }
   const unwrap = (reply: { ok: boolean; result?: unknown; error?: string }) => {
     if (!reply.ok) throw new Error(reply.error ?? "Browser action failed");
@@ -2207,7 +2207,7 @@ async function runHostedAppCommand(
     case "context_info":
       return unwrap(await gateway.human("human_context_info", { profile, x: args.x, y: args.y }, "app-ws"));
     default:
-      throw new Error("This 同屏 card action is not available on hosted devices yet.");
+      throw new Error("This TongPing card action is not available on hosted devices yet.");
   }
 }
 

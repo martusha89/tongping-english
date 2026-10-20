@@ -1700,7 +1700,7 @@ const server = http.createServer(async (request, response) => {
       return;
     }
 
-    // Camera face effects for 「让 TA 看看你」, built from the original demo by
+    // Camera face effects for "Let Them See You", built from the original demo by
     // scripts/build-camera-fx.mjs; the card loads them only when the camera opens.
     const cameraFxAsset = /^\/assets\/camera-fx\/(geometry|engine)\.js$/.exec(url.pathname);
     if (request.method === "GET" && cameraFxAsset) {
