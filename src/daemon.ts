@@ -26,6 +26,21 @@ import { resolveDeploymentMode } from "./deployment-mode.js";
 import { acquireDaemonLock } from "./daemon-lock.js";
 import { LocalGateway, type BrowserGateway } from "./gateway.js";
 import { renderLivePage } from "./live-page.js";
+import { BROWSER_APP_URI } from "./browser-app.js";
+import {
+  LOCAL_APP_COOKIE,
+  LOCAL_APP_HOST_ASSET,
+  LocalAppSessionStore,
+  clearLocalAppCookie,
+  cookieValue,
+  localAppCookie,
+  localAppRequestIsLoopback,
+  localAppRequestOriginAllowed,
+  parseLocalMcpPayload,
+  renderLocalAppHostPage,
+  renderLocalAppLaunchRequiredPage,
+  scopeLocalAppToolArguments,
+} from "./local-app-host.js";
 import { createTongpingMcpServer } from "./mcp-server.js";
 import { TongpingOAuthService } from "./oauth-service.js";
 import { RemoteWorkerRelay } from "./worker-relay.js";
@@ -111,6 +126,7 @@ const browserGateway: BrowserGateway =
     ? relay
     : localGateway;
 const token = await loadOrCreateDaemonToken(config.homeDir);
+const localAppSessions = new LocalAppSessionStore();
 const workerToken = remoteWorkerMode && !trustedWorkerTransport
   ? await loadOrCreateWorkerToken(
       config.homeDir + "/worker-auth",
@@ -1447,6 +1463,9 @@ const lock = await acquireDaemonLock(config.homeDir);
 const mcpAppBundlePath = fileURLToPath(
   import.meta.resolve("@modelcontextprotocol/ext-apps/app-with-deps"),
 );
+const localAppHostBundlePath = fileURLToPath(
+  new URL("../assets/local-app-host-v1.js", import.meta.url),
+);
 
 const ACTIONS = new Set<BrowserAction>([
   "browser_profiles",
@@ -1672,6 +1691,43 @@ const httpMcp = createMcpHandler(
 );
 const nodeMcpHandler = toNodeHandler(httpMcp);
 
+let localMcpRequestId = 0;
+
+async function localMcpRequest(
+  method: string,
+  params: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  const id = ++localMcpRequestId;
+  const response = await fetch(`http://127.0.0.1:${port}/mcp`, {
+    method: "POST",
+    headers: {
+      authorization: `Bearer ${token}`,
+      "content-type": "application/json",
+      accept: "application/json, text/event-stream",
+      "mcp-protocol-version": "2025-06-18",
+      origin: `http://127.0.0.1:${port}`,
+    },
+    body: JSON.stringify({ jsonrpc: "2.0", id, method, params }),
+    signal: AbortSignal.timeout(15_000),
+  });
+  const contentLength = Number(response.headers.get("content-length") ?? "0");
+  if (contentLength > 16_000_000) {
+    throw new Error("Local MCP response was too large");
+  }
+  const text = await response.text();
+  if (Buffer.byteLength(text) > 16_000_000) {
+    throw new Error("Local MCP response was too large");
+  }
+  if (!response.ok) {
+    throw new Error(`Local MCP request failed (${response.status})`);
+  }
+  return parseLocalMcpPayload(
+    text,
+    response.headers.get("content-type"),
+    id,
+  );
+}
+
 const server = http.createServer(async (request, response) => {
   try {
     const url = new URL(
@@ -1730,6 +1786,214 @@ const server = http.createServer(async (request, response) => {
       });
       response.end(body);
       return;
+    }
+
+    if (
+      request.method === "GET" &&
+      url.pathname === LOCAL_APP_HOST_ASSET
+    ) {
+      const body = await readFile(localAppHostBundlePath);
+      response.writeHead(200, {
+        "content-type": "text/javascript; charset=utf-8",
+        "content-length": body.length,
+        "cache-control": "public, max-age=31536000, immutable",
+      });
+      response.end(body);
+      return;
+    }
+
+    if (
+      request.method === "POST" &&
+      url.pathname === "/v1/local-app/launch"
+    ) {
+      if (!localAppRequestAllowed(request)) {
+        return sendJson(response, 404, { ok: false, error: "Not found" });
+      }
+      if (!bearerMatches(request.headers.authorization, token)) {
+        return sendJson(response, 401, { ok: false, error: "Unauthorized" });
+      }
+      const body = await readJsonBody(request, 16_384);
+      const launch = localAppSessions.createLaunch({
+        identity: requiredBodyString(body, "identity"),
+        profile: requiredBodyString(body, "profile"),
+        bridgeOrigin:
+          typeof body.bridgeOrigin === "string" ? body.bridgeOrigin : undefined,
+        bridgeToken: requiredBodyString(body, "bridgeToken"),
+      });
+      return sendJson(response, 200, {
+        ok: true,
+        url: `http://127.0.0.1:${port}/app/launch?code=${encodeURIComponent(launch.code)}`,
+        expiresAt: new Date(launch.expiresAt).toISOString(),
+      });
+    }
+
+    if (
+      request.method === "GET" &&
+      url.pathname === "/app/launch"
+    ) {
+      if (!localAppRequestAllowed(request)) {
+        return sendJson(response, 404, { ok: false, error: "Not found" });
+      }
+      const code = url.searchParams.get("code") ?? "";
+      const previousSessionId = cookieValue(
+        request.headers.cookie,
+        LOCAL_APP_COOKIE,
+      );
+      const session = localAppSessions.consumeLaunch(code);
+      if (!session) {
+        response.writeHead(303, {
+          location: "/app",
+          "set-cookie": clearLocalAppCookie(),
+          "cache-control": "no-store",
+          "referrer-policy": "no-referrer",
+        });
+        response.end();
+        return;
+      }
+      localAppSessions.revoke(previousSessionId);
+      response.writeHead(303, {
+        location: "/app",
+        "set-cookie": localAppCookie(session.id),
+        "cache-control": "no-store",
+        "referrer-policy": "no-referrer",
+      });
+      response.end();
+      return;
+    }
+
+    if (request.method === "GET" && url.pathname === "/app") {
+      if (!localAppRequestAllowed(request)) {
+        return sendJson(response, 404, { ok: false, error: "Not found" });
+      }
+      const session = localAppSessionFromRequest(request);
+      const nonce = crypto.randomBytes(18).toString("base64url");
+      return sendLocalAppHtml(
+        response,
+        session
+          ? renderLocalAppHostPage(session, nonce)
+          : renderLocalAppLaunchRequiredPage(nonce),
+        nonce,
+      );
+    }
+
+    if (
+      request.method === "GET" &&
+      url.pathname === "/v1/local-app/card"
+    ) {
+      const session = localAppSessionFromRequest(request);
+      if (!session) {
+        response.setHeader("set-cookie", clearLocalAppCookie());
+        return sendJson(response, 401, {
+          ok: false,
+          error: "Local app session expired. Open the TongPing room again.",
+        });
+      }
+      const resource = await localMcpRequest("resources/read", {
+        uri: BROWSER_APP_URI,
+      });
+      const contents = Array.isArray(resource.contents) ? resource.contents : [];
+      const card = contents.find(
+        (value) =>
+          value &&
+          typeof value === "object" &&
+          !Array.isArray(value) &&
+          typeof (value as { text?: unknown }).text === "string",
+      ) as { text: string } | undefined;
+      if (!card) throw new Error("TongPing card resource was empty");
+      return sendLocalAppCardHtml(response, card.text);
+    }
+
+    if (
+      request.method === "POST" &&
+      url.pathname === "/v1/local-app/bootstrap"
+    ) {
+      const session = localAppApiSession(request);
+      if (!session) {
+        response.setHeader("set-cookie", clearLocalAppCookie());
+        return sendJson(response, 401, {
+          ok: false,
+          error: "Local app session expired. Open the TongPing room again.",
+        });
+      }
+      const initialResult = await localMcpRequest("tools/call", {
+        name: "browser_app",
+        arguments: {
+          identity: session.identity,
+          profile: session.profile,
+        },
+      });
+      return sendJson(response, 200, {
+        initialResult,
+      });
+    }
+
+    if (
+      request.method === "POST" &&
+      url.pathname === "/v1/local-app/message"
+    ) {
+      const session = localAppApiSession(request);
+      if (!session) {
+        response.setHeader("set-cookie", clearLocalAppCookie());
+        return sendJson(response, 401, {
+          ok: false,
+          error: "Local app session expired. Open the TongPing room again.",
+        });
+      }
+      const body = await readJsonBody(request, 64_000);
+      const text = requiredBodyString(body, "text").trim();
+      if (!text || text.length > 16_000) {
+        return sendJson(response, 400, {
+          ok: false,
+          error: "Invalid chat message",
+        });
+      }
+      const bridgeResponse = await fetch(`${session.bridgeOrigin}/message`, {
+        method: "POST",
+        headers: {
+          authorization: `Bridge ${session.bridgeToken}`,
+          "content-type": "application/json",
+          origin: `http://127.0.0.1:${port}`,
+        },
+        body: JSON.stringify({
+          text,
+          identity: session.identity,
+          profile: session.profile,
+        }),
+        signal: AbortSignal.timeout(5_000),
+      });
+      if (!bridgeResponse.ok) {
+        return sendJson(response, 502, {
+          ok: false,
+          error: "Hearthside conversation bridge is not attached",
+        });
+      }
+      return sendJson(response, 202, { ok: true });
+    }
+
+    if (
+      request.method === "POST" &&
+      url.pathname === "/v1/local-app/tool"
+    ) {
+      const session = localAppApiSession(request);
+      if (!session) {
+        response.setHeader("set-cookie", clearLocalAppCookie());
+        return sendJson(response, 401, {
+          ok: false,
+          error: "Local app session expired. Open the TongPing room again.",
+        });
+      }
+      const body = await readJsonBody(request, 12_000_000);
+      const name = requiredBodyString(body, "name");
+      const args = scopeLocalAppToolArguments(
+        name,
+        body.arguments,
+        session,
+      );
+      const result = await localMcpRequest("tools/call", {
+        name,
+        arguments: args,
+      });
+      return sendJson(response, 200, result);
     }
 
     if (
@@ -3791,6 +4055,106 @@ function sendHtml(
       "default-src 'self'; img-src 'self' blob: data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'",
   });
   response.end(body);
+}
+
+function sendLocalAppHtml(
+  response: http.ServerResponse,
+  body: string,
+  nonce: string,
+) {
+  response.writeHead(200, {
+    "content-type": "text/html; charset=utf-8",
+    "content-length": Buffer.byteLength(body),
+    "cache-control": "no-store",
+    "referrer-policy": "no-referrer",
+    "x-content-type-options": "nosniff",
+    "x-frame-options": "DENY",
+    "permissions-policy":
+      "camera=(self), microphone=(self), clipboard-write=(self)",
+    "content-security-policy": [
+      "default-src 'self'",
+      `script-src 'self' 'nonce-${nonce}'`,
+      `style-src 'nonce-${nonce}'`,
+      "img-src 'self' blob: data:",
+      "font-src 'self' data:",
+      "connect-src 'self'",
+      "frame-src 'self'",
+      "base-uri 'none'",
+      "form-action 'none'",
+      "frame-ancestors 'none'",
+    ].join("; "),
+  });
+  response.end(body);
+}
+
+function sendLocalAppCardHtml(
+  response: http.ServerResponse,
+  body: string,
+) {
+  response.writeHead(200, {
+    "content-type": "text/html; charset=utf-8",
+    "content-length": Buffer.byteLength(body),
+    "cache-control": "no-store",
+    "referrer-policy": "no-referrer",
+    "x-content-type-options": "nosniff",
+    "content-security-policy": [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' blob: data:",
+      "media-src 'self' blob: data:",
+      "font-src 'self' data:",
+      `connect-src 'self' ws://127.0.0.1:${port} ws://localhost:${port} https://cdn.jsdelivr.net https://storage.googleapis.com`,
+      "worker-src 'self' blob:",
+      "base-uri 'none'",
+      "form-action 'none'",
+      "frame-ancestors 'self'",
+    ].join("; "),
+  });
+  response.end(body);
+}
+
+function localAppRequestAllowed(request: http.IncomingMessage): boolean {
+  if (!localAppRequestIsLoopback(request.socket.remoteAddress)) return false;
+  const requestHost = request.headers.host?.toLowerCase();
+  return (
+    requestHost === `127.0.0.1:${port}` ||
+    requestHost === `localhost:${port}` ||
+    requestHost === `[::1]:${port}`
+  );
+}
+
+function localAppSessionFromRequest(request: http.IncomingMessage) {
+  if (!localAppRequestAllowed(request)) return null;
+  const id = cookieValue(request.headers.cookie, LOCAL_APP_COOKIE);
+  return localAppSessions.get(id);
+}
+
+function localAppApiSession(
+  request: http.IncomingMessage,
+  requireOrigin = true,
+) {
+  const session = localAppSessionFromRequest(request);
+  if (!session) return null;
+  const origin = request.headers.origin;
+  if (
+    (requireOrigin || origin !== undefined) &&
+    !localAppRequestOriginAllowed(origin, port)
+  ) {
+    return null;
+  }
+  const provided = headerString(request.headers["x-tongping-csrf"]);
+  if (!provided || !constantTimeTextEqual(provided, session.csrf)) return null;
+  return session;
+}
+
+function constantTimeTextEqual(left: string, right: string): boolean {
+  const leftBytes = Buffer.from(left);
+  const rightBytes = Buffer.from(right);
+  return (
+    leftBytes.length === rightBytes.length &&
+    crypto.timingSafeEqual(leftBytes, rightBytes)
+  );
 }
 
 function writeLivePart(

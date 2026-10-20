@@ -66,10 +66,24 @@ You are connected to the TongPing shared browser.
 | Symptom | Cause / action |
 |---|---|
 | Tools truncated or called incorrectly | TongPing has 50 tools. Some clients limit tool counts or models struggle to call them. Enable only common tools: `browser_open`, `browser_read`, `browser_snapshot`, `browser_click`, `browser_type`, `browser_screenshot`, `browser_media_context`, `browser_app_chat_push`, `browser_app_room_read` |
-| No card | Client lacks MCP Apps support. Open `http://127.0.0.1:45921/live` in a browser and enter the daemon token for live view and manual control |
+| No card | Client lacks MCP Apps support. `/live` is only a manual remote; it does **not** contain group chat or Watch Together. Use the standalone local room below when a trusted desktop bridge is available. |
 | Appears as `gpt.chat` | Model omitted `identity`; the server used its default. Use the prompt above to require it on every call |
 | Card metadata has `openai/*` keys after OAuth | TongPing recognizes only claude.ai as a Claude host; all others follow ChatGPT rules. Usually does not affect tool use |
 | Screenshots exceed context limits | Prefer `browser_read` / `browser_snapshot` (text), and request screenshots only when needed |
+
+## Standalone local room
+
+TongPing can host its real MCP App card in a normal local browser without exposing the daemon token to that browser. A trusted local launcher exchanges the daemon credential for a one-use launch code; the browser receives a short-lived, HttpOnly, loopback-only session.
+
+On the Hearthside integration, ask the agent:
+
+```text
+Open the TongPing room.
+```
+
+The agent's local room tool opens the full card (live screen, group chat, Watch Together, and takeover) and attaches its chat composer to the current Hearthside conversation. The page never stores the daemon token in its URL, DOM, cookies readable by JavaScript, `localStorage`, or `sessionStorage`.
+
+Opening `/app` directly without a trusted launcher shows instructions rather than asking you to paste the daemon token.
 
 ## Building your own frontend (rendering cards yourself)
 
@@ -79,4 +93,4 @@ The card is a standard MCP Apps page (`ui://` resource; see `src/browser-app.ts`
 - `updateModelContext` tells the model what you are viewing.
 - Live video, audio, and Watch Together use WebSocket / HLS URLs inside the card (signed links supplied by the `browser_app` tool result).
 
-Implementing this host protocol lets a custom frontend embed the card. The easiest alternative is tools + `/live` only. This advanced use is unsupported by the project.
+Implementing this host protocol lets a custom frontend embed the card. The built-in standalone local room is the reference local implementation. `/live` remains a compatibility remote for view and manual control only.

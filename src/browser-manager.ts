@@ -157,6 +157,10 @@ export class BrowserManager {
         headless: this.config.headless,
         executablePath: this.config.executablePath,
         channel: this.config.channel,
+        // Chrome must be allowed to refresh Widevine before DRM-protected
+        // services such as Netflix can start playback. Playwright disables
+        // component updates by default, which sends Netflix to M7701-1003.
+        ignoreDefaultArgs: ["--disable-component-update"],
         locale: this.config.locale,
         timezoneId: this.config.timezoneId,
         viewport: this.config.headless ? { width: 768, height: 1024 } : null,

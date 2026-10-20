@@ -24,6 +24,7 @@ TongPing itself does not connect to third-party servers. The only exceptions are
 - **High-risk clicks**: purchases, payments, transfers, account deletion, and similar actions require approval for each click. Approval is single-use and bound to a specific element.
 - **Human takeover**: while you use “Take control,” AI clicks, typing, and navigation are locked.
 - **Website anti-abuse protection**: risk-control / CAPTCHA pages on sites such as Xiaohongshu and Douyin automatically stop AI write actions on that site; action rates also have budgets.
+- **Standalone local room**: `/app` is loopback-only and starts only through an authenticated one-use launch. Its short-lived session is held in an HttpOnly, SameSite=Strict cookie; state-changing calls also require exact-origin CSRF proof. The daemon token is never placed in the page, URL, JavaScript-readable storage, or card iframe. Card tool calls pass through a closed allowlist and are bound to the launched identity and profile.
 
 ## Precautions you must take
 

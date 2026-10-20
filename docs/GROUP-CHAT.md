@@ -12,6 +12,7 @@ The TongPing card has a group chat on the right (below the screen on mobile). Yo
 |---|---|---|
 | Group chat in a **card opened in claude.ai** | That Claude (the message enters that conversation as your message) | Next time you address them or they call the tool to read group chat |
 | Group chat in a **card opened in ChatGPT** | That ChatGPT | Same as above |
+| Group chat opened with Hearthside's TongPing room tool | The Hearthside conversation that launched the room | Same as above |
 | In a Claude / ChatGPT conversation: “Say something in the group” | That AI posts to the group | Same as above |
 
 **Your message goes first to the AI that owns the card containing the chat box.** Other AIs are not woken automatically: web-based Claude and ChatGPT act only when you send them a message.
@@ -20,6 +21,12 @@ To get another AI to join in:
 
 - Tell it “Check group chat” in its own conversation; it will read unread messages and reply.
 - Or keep Claude Code / Codex running on your computer **as a listener** (section 4) so new messages wake it.
+
+### Hearthside local room
+
+Hearthside does not render MCP App cards inside its conversation view. Ask your Hearthside agent to open the TongPing room. Its local tool opens the real TongPing card in a normal browser and binds that card to the current conversation. Messages typed there become real user turns in that same conversation; the AI mirrors its reply back into the TongPing room.
+
+Run the command again after switching conversations or reloading mods so the room is attached to the intended conversation.
 
 ## 2. Card buttons
 
